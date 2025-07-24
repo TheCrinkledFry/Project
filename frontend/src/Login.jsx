@@ -1,26 +1,30 @@
+// src/Login.jsx
 import React, { useState } from 'react';
 
-function LoginPage({ onLogin }) {
+export default function LoginPage({ onLogin, errorMessage }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [localError, setLocalError] = useState('');
 
   const handleSubmit = e => {
     e.preventDefault();
-    // simple client‑side check
     if (!email || !password) {
-      setError('Email and password are required.');
+      setLocalError('Email and password are required.');
       return;
     }
-    setError('');
-    // hand off creds to parent (or call your API here)
+    setLocalError('');
     onLogin({ email, password });
   };
 
   return (
     <div style={{ maxWidth: '400px', margin: '50px auto', fontFamily: 'sans-serif' }}>
       <h2>Login</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {/* field‑validation error */}
+      {localError && <p style={{ color: 'red' }}>{localError}</p>}
+      {/* credential‑check error */}
+      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '10px' }}>
           <label htmlFor="email">Email</label><br/>
@@ -49,6 +53,4 @@ function LoginPage({ onLogin }) {
     </div>
   );
 }
-
-export default LoginPage;
 
