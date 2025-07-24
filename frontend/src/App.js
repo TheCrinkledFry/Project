@@ -7,10 +7,11 @@ import {
   useNavigate
 } from 'react-router-dom';
 
-import LoginPage from './Login';         // src/Login.jsx
-import Home from './Home';               // src/Home.jsx
+import LoginPage from './Login';           // src/Login.jsx
+import Home from './Home';                 // src/Home.jsx
 import PrivateRoute from './PrivateRoute'; // src/PrivateRoute.jsx
-import Products from './Products';       // src/Products.jsx
+import Products from './Products';         // src/Products.jsx
+import Orders from './Orders';             // src/Products.jsx
 
 function App() {
   return (
@@ -36,6 +37,18 @@ function App() {
             <PrivateRoute>
               <Home>
                 <Products />
+              </Home>
+            </PrivateRoute>
+          }
+        />
+
+        {/* protected orders page */}
+        <Route
+          path="/orders"
+          element={
+            <PrivateRoute>
+              <Home>
+                <Orders />
               </Home>
             </PrivateRoute>
           }
