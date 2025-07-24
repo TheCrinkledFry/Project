@@ -4,8 +4,8 @@ export default function Orders() {
   // Temporary static data until backend is ready
   const orders = [
     { id: 1, customerName: 'Alice', date: '2025-07-24', total: 49.99, status: 'Shipped' },
-    { id: 2, customerName: 'Bob',   date: '2025-07-23', total: 29.95, status: 'Processing' },
-    { id: 3, customerName: 'Carol', date: '2025-07-22', total: 15.00, status: 'Processing' },
+    { id: 2, customerName: 'Bob',   date: '2025-07-23', total: 29.95, status: 'Executed' },
+    { id: 3, customerName: 'Carol', date: '2025-07-22', total: 15.00, status: 'Executed' },
     { id: 4, customerName: 'Dave',  date: '2025-07-21', total: 99.90, status: 'Shipped' },
   ];
 
@@ -54,8 +54,8 @@ export default function Orders() {
               onChange={e => setSortDir(e.target.value)}
               style={{ marginLeft: '8px' }}
             >
-              <option value="desc">Shipped first</option>
-              <option value="asc">Processing first</option>
+              <option value="desc">Shipped</option>
+              <option value="asc">Executed</option>
             </select>
           </label>
         ) : (
