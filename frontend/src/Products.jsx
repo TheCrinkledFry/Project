@@ -1,21 +1,53 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function Products() {
   const products = [
-    { id: 1, name: 'Product 1', img: '/productImages/cake.png' },
-    { id: 2, name: 'Product 2', img: '/productImages/steak.png' },
-    { id: 3, name: 'Product 3', img: '/productImages/sushi.png' },
-    { id: 4, name: 'Product 4', img: '/productImages/ramen.png' },
-    { id: 5, name: 'Product 5', img: '/productImages/burger.png' },
-    { id: 6, name: 'Product 6', img: '/productImages/pizza.png' },
-    { id: 7, name: 'Product 7', img: '/productImages/chicken.png' },
-    { id: 8, name: 'Product 8', img: '/productImages/lasagna.png' },
-    { id: 9, name: 'Product 9', img: '/productImages/salmon.png' },
-    { id: 10, name: 'Product 10', img: '/productImages/pie.png' },
+    { id: 1, name: 'Cake', img: '/productImages/cake.png', price: 10, available: true },
+    { id: 2, name: 'Steak', img: '/productImages/steak.png', price: 25, available: false },
+    { id: 3, name: 'Sushi', img: '/productImages/sushi.png', price: 15, available: true },
+    { id: 4, name: 'Ramen', img: '/productImages/ramen.png', price: 12, available: true },
+    { id: 5, name: 'Burger', img: '/productImages/burger.png', price: 8, available: false },
+    { id: 6, name: 'Pizza', img: '/productImages/pizza.png', price: 14, available: true },
+    { id: 7, name: 'Chicken', img: '/productImages/chicken.png', price: 11, available: true },
+    { id: 8, name: 'Lasagna', img: '/productImages/lasagna.png', price: 20, available: false },
+    { id: 9, name: 'Salmon', img: '/productImages/salmon.png', price: 18, available: true },
+    { id: 10, name: 'Pie', img: '/productImages/pie.png', price: 9, available: true },
   ];
 
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState(''); // '', 'price', 'availability'
+
+  // Filter products by search
+  let filtered = products.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Sort products
+  if (sort === 'price') {
+    filtered = [...filtered].sort((a, b) => a.price - b.price);
+  } else if (sort === 'availability') {
+    filtered = [...filtered].sort((a, b) => (a.available === b.available ? 0 : a.available ? -1 : 1));
+  }
+
   return (
-    <div style={{ fontFamily: 'sans-serif' }}>
+    <div style={{ fontFamily: 'sans-serif', padding: '20px' }}>
+      {/* Controls */}
+      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ padding: '5px' }}
+        />
+        <select value={sort} onChange={(e) => setSort(e.target.value)}>
+          <option value="">Sort...</option>
+          <option value="price">Sort by Price</option>
+          <option value="availability">Sort by Availability</option>
+        </select>
+      </div>
+
+      {/* Product grid */}
       <div
         style={{
           display: 'grid',
@@ -23,18 +55,21 @@ export default function Products() {
           gap: '20px',
         }}
       >
-        {products.map(p => (
-          <div key={p.id} style={{ textAlign: 'center' }}>
+        {filtered.map((p) => (
+          <div key={p.id} style={{ textAlign: 'center', border: '1px solid #ccc', padding: '10px', borderRadius: '8px' }}>
             <img
               src={p.img}
               alt={p.name}
               style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
             />
-            <p style={{ marginTop: '8px' }}>{p.name}</p>
+            <p style={{ marginTop: '8px', fontWeight: 'bold' }}>{p.name}</p>
+            <p>${p.price}</p>
+            <p style={{ color: p.available ? 'green' : 'red' }}>
+              {p.available ? 'In stock' : 'Out of stock'}
+            </p>
           </div>
         ))}
       </div>
     </div>
   );
 }
-
