@@ -1,4 +1,3 @@
-// src/Login.jsx
 import React, { useState } from 'react';
 
 export default function LoginPage({ onLogin, errorMessage }) {
@@ -8,11 +7,27 @@ export default function LoginPage({ onLogin, errorMessage }) {
 
   const handleSubmit = e => {
     e.preventDefault();
+    // Basic front-end validation
     if (!email || !password) {
       setLocalError('Email and password are required.');
       return;
     }
     setLocalError('');
+
+    // TODO: Call backend login API here (e.g., POST /api/login)
+    // fetch('/api/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+    //   .then(res => res.json())
+    //   .then(data => {
+    //     // On success, store token (e.g., localStorage.setItem('authToken', data.token));
+    //     // then call onLogin or redirect
+    //     onLogin(data);
+    //   })
+    //   .catch(err => {
+    //     // Handle login errors from server
+    //     setLocalError(err.message || 'Login failed');
+    //   });
+
+    // Current onLogin prop: backend should call this after API returns token
     onLogin({ email, password });
   };
 
@@ -20,14 +35,14 @@ export default function LoginPage({ onLogin, errorMessage }) {
     <div style={{ maxWidth: '400px', margin: '50px auto', fontFamily: 'sans-serif' }}>
       <h2>Login</h2>
 
-      {/* field‑validation error */}
+      {/* Display front-end validation errors */}
       {localError && <p style={{ color: 'red' }}>{localError}</p>}
-      {/* credential‑check error */}
+      {/* Display server-side errors (e.g., invalid credentials) */}
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="email">Email</label><br/>
+          <label htmlFor="email">Email</label><br />
           <input
             id="email"
             type="email"
@@ -36,8 +51,9 @@ export default function LoginPage({ onLogin, errorMessage }) {
             style={{ width: '100%', padding: '8px' }}
           />
         </div>
+
         <div style={{ marginBottom: '10px' }}>
-          <label htmlFor="password">Password</label><br/>
+          <label htmlFor="password">Password</label><br />
           <input
             id="password"
             type="password"

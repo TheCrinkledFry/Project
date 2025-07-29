@@ -41,10 +41,13 @@ export default function Home({ children }) {
       <aside
         style={{
           width: '220px',
-          background: '#ffe6b4',
+          background: '#fcffc4',
           padding: '20px',
           display: 'flex',
           flexDirection: 'column',
+          boxSizing: 'border-box',
+          height: 'calc(100vh - 15px)',
+          marginBottom: '40px',
         }}
       >
         {/* Logo */}
@@ -58,7 +61,7 @@ export default function Home({ children }) {
         </div>
 
         {/* Nav buttons */}
-        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
           {buttons.map(({ key, label, action }) => (
             <button
               key={key}
@@ -67,7 +70,7 @@ export default function Home({ children }) {
               onMouseLeave={() => setHovered(null)}
               style={{
                 ...baseStyle,
-                ...(hovered === key ? hoverStyle : {})
+                ...(hovered === key ? hoverStyle : {}),
               }}
             >
               {label}

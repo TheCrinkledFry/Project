@@ -1,28 +1,30 @@
 import React, { useState } from 'react';
 
 export default function Products() {
-  const products = [
-    { id: 1, name: 'Cake',    img: '/productImages/cake.png',    price: 10, available: true,  quantity: 5  },
-    { id: 2, name: 'Steak',   img: '/productImages/steak.png',   price: 25, available: false, quantity: 0  },
-    { id: 3, name: 'Sushi',   img: '/productImages/sushi.png',   price: 15, available: true,  quantity: 12 },
-    { id: 4, name: 'Ramen',   img: '/productImages/ramen.png',   price: 12, available: true,  quantity: 8  },
-    { id: 5, name: 'Burger',  img: '/productImages/burger.png',  price: 8,  available: false, quantity: 0  },
-    { id: 6, name: 'Pizza',   img: '/productImages/pizza.png',   price: 14, available: true,  quantity: 20 },
-    { id: 7, name: 'Chicken', img: '/productImages/chicken.png', price: 11, available: true,  quantity: 7  },
-    { id: 8, name: 'Lasagna', img: '/productImages/lasagna.png', price: 20, available: false, quantity: 0  },
-    { id: 9, name: 'Salmon',  img: '/productImages/salmon.png',  price: 18, available: true,  quantity: 15 },
-    { id: 10,name: 'Pie',     img: '/productImages/pie.png',     price: 9,  available: true,  quantity: 10 },
-  ];
+  // TODO: Replace this mock array with data fetched from the backend
+  // (e.g., GET /api/products) once your API is available.
+  const [products] = useState([
+    { id: 1,  name: 'Cake',    img: '/productImages/cake.png',    price: 10, available: true,  quantity: 5  },
+    { id: 2,  name: 'Steak',   img: '/productImages/steak.png',   price: 25, available: false, quantity: 0  },
+    { id: 3,  name: 'Sushi',   img: '/productImages/sushi.png',   price: 15, available: true,  quantity: 12 },
+    { id: 4,  name: 'Ramen',   img: '/productImages/ramen.png',   price: 12, available: true,  quantity: 8  },
+    { id: 5,  name: 'Burger',  img: '/productImages/burger.png',  price: 8,  available: false, quantity: 0  },
+    { id: 6,  name: 'Pizza',   img: '/productImages/pizza.png',   price: 14, available: true,  quantity: 20 },
+    { id: 7,  name: 'Chicken', img: '/productImages/chicken.png', price: 11, available: true,  quantity: 7  },
+    { id: 8,  name: 'Lasagna', img: '/productImages/lasagna.png', price: 20, available: false, quantity: 0  },
+    { id: 9,  name: 'Salmon',  img: '/productImages/salmon.png',  price: 18, available: true,  quantity: 15 },
+    { id: 10, name: 'Pie',     img: '/productImages/pie.png',     price: 9,  available: true,  quantity: 10 },
+  ]);
 
   const [search, setSearch] = useState('');
-  const [sort, setSort] = useState(''); // '', 'price', 'availability'
+  const [sort, setSort]     = useState(''); // '', 'price', or 'availability'
 
-  // Filter products by search
+  // Filter by search term
   let filtered = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Sort products
+  // Sort logic on frontend
   if (sort === 'price') {
     filtered = [...filtered].sort((a, b) => a.price - b.price);
   } else if (sort === 'availability') {
@@ -30,20 +32,21 @@ export default function Products() {
       if (a.available !== b.available) {
         return a.available ? -1 : 1;
       }
+      // secondary: highest quantity first
       return b.quantity - a.quantity;
     });
   }
 
   return (
     <div style={{ fontFamily: 'sans-serif', padding: '32px' }}>
-      {/* Controls */}
+      {/* Search & Sort Controls */}
       <div style={{ marginBottom: '24px', display: 'flex', gap: '12px' }}>
         <input
           type="text"
           placeholder="Search by name..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          style={{ padding: '8px', flex: '1' }}
+          style={{ padding: '8px', flex: 1 }}
         />
         <select
           value={sort}
@@ -56,7 +59,7 @@ export default function Products() {
         </select>
       </div>
 
-      {/* Product grid */}
+      {/* Product Grid */}
       <div
         style={{
           display: 'grid',
@@ -74,6 +77,7 @@ export default function Products() {
               borderRadius: '8px',
             }}
           >
+            {/* TODO: Serve correct image URLs from backend */}
             <div
               style={{
                 width: '100%',
@@ -81,7 +85,6 @@ export default function Products() {
                 position: 'relative',
                 overflow: 'hidden',
                 borderRadius: '4px',
-                background: 'transparent',
               }}
             >
               <img
@@ -97,17 +100,16 @@ export default function Products() {
                 }}
               />
             </div>
-            <p
-              style={{
-                marginTop: '16px',
-                fontWeight: 'bold',
-                fontSize: '1.2rem',
-              }}
-            >
+
+            <p style={{ marginTop: '16px', fontWeight: 'bold', fontSize: '1.2rem' }}>
               {p.name}
             </p>
-            <p style={{ margin: '12px 0' }}>${p.price}</p>
+            <p style={{ margin: '12px 0' }}>${p.price.toFixed(2)}</p>
+
+            {/* TODO: Quantity should come from backend */}
             <p style={{ marginBottom: '8px' }}>Quantity: {p.quantity}</p>
+
+            {/* TODO: 'available' should reflect real stock status */}
             <p style={{ color: p.available ? 'green' : 'red', margin: 0 }}>
               {p.available ? 'In stock' : 'Out of stock'}
             </p>
