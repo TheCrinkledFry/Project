@@ -1,55 +1,45 @@
-// src/App.js
-import React, { useState } from 'react';
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useNavigate
-} from 'react-router-dom';
-
-import LoginPage from './Login';           // src/Login.jsx
-import Home from './Home';                 // src/Home.jsx
-import PrivateRoute from './PrivateRoute'; // src/PrivateRoute.jsx
-import Products from './Products';         // src/Products.jsx
-import Orders from './Orders';             // src/Products.jsx
+// App.js
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import LoginPage from "./Login";
+import Home from "./Home";
+import Products from "./Products";
+import Orders from "./Orders";
+import PrivateRoute from "./PrivateRoute";
 
 function App() {
+  const [user, setUser] = useState(null); // Store user data in state
+
+  const handleLogin = (userData) => {
+    // Update the user state with the login data
+    setUser(userData);
+  };
+
   return (
     <Router>
       <Routes>
-        {/* public login */}
-        <Route path="/" element={<LoginWrapper />} />
-
-        {/* protected dashboard (home) */}
+        <Route path="/" element={<LoginPage onLogin={handleLogin} />} />
         <Route
           path="/dashboard"
           element={
-            <PrivateRoute>
+            <PrivateRoute user={user}>
               <Home />
             </PrivateRoute>
           }
         />
-
-        {/* protected products page */}
         <Route
           path="/products"
           element={
-            <PrivateRoute>
-              <Home>
-                <Products />
-              </Home>
+            <PrivateRoute user={user}>
+              <Products />
             </PrivateRoute>
           }
         />
-
-        {/* protected orders page */}
         <Route
           path="/orders"
           element={
-            <PrivateRoute>
-              <Home>
-                <Orders />
-              </Home>
+            <PrivateRoute user={user}>
+              <Orders />
             </PrivateRoute>
           }
         />
@@ -58,27 +48,55 @@ function App() {
   );
 }
 
-function LoginWrapper() {
-  const navigate = useNavigate();
-  const [error, setError] = useState('');
-
-  const handleLogin = ({ email, password }) => {
-    // stubbed credentials for testing
-    if (email === 'user@test.com' && password === 'password123') {
-      localStorage.setItem('authToken', 'dummy-token');
-      navigate('/dashboard');
-    } else {
-      setError('Invalid email or password');
-    }
-  };
-
-  return (
-    <LoginPage
-      onLogin={handleLogin}
-      errorMessage={error}
-    />
-  );
-}
-
 export default App;
 
+// import React, { useState } from "react";
+// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// import LoginPage from "./Login";
+// import Home from "./Home";
+// import Products from "./Products";
+// import Orders from "./Orders";
+// import PrivateRoute from "./PrivateRoute";
+//
+// function App() {
+//   const [user, setUser] = useState(null); // Store user data in state
+//
+//   const handleLogin = (userData) => {
+//     // Only set user data in state for current session (no persistent storage)
+//     setUser(userData);
+//   };
+//
+//   return (
+//     <Router>
+//       <Routes>
+//         <Route path="/" element={<LoginPage onLogin={handleLogin} />} />
+//         <Route
+//           path="/dashboard"
+//           element={
+//             <PrivateRoute user={user}>
+//               <Home />
+//             </PrivateRoute>
+//           }
+//         />
+//         <Route
+//           path="/products"
+//           element={
+//             <PrivateRoute user={user}>
+//               <Products />
+//             </PrivateRoute>
+//           }
+//         />
+//         <Route
+//           path="/orders"
+//           element={
+//             <PrivateRoute user={user}>
+//               <Orders />
+//             </PrivateRoute>
+//           }
+//         />
+//       </Routes>
+//     </Router>
+//   );
+// }
+//
+// export default App;
