@@ -58,8 +58,8 @@ export default function Login() {
     <div style={{
       display: 'flex',
       justifyContent: 'center',
-      alignItems: 'flex-start',    // moved up slightly
-      paddingTop: '15vh',          // adjust vertical offset
+      alignItems: 'flex-start',
+      paddingTop: '15vh',
       minHeight: '100vh',
       background: '#f9f9f9'
     }}>
@@ -71,6 +71,19 @@ export default function Login() {
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         textAlign: 'center'
       }}>
+        <h1
+          style={{
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            letterSpacing: '2px',
+            color: '#111',
+            margin: 0,
+            marginBottom: '1.2rem',
+            textTransform: 'uppercase'
+          }}
+        >
+          FULLSTACK FOOD
+        </h1>
         <h2 style={{ marginBottom: '1rem' }}>Login</h2>
         {error && <p style={{ color: 'red', marginBottom: '1rem' }}>{error}</p>}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
