@@ -1,3 +1,5 @@
+// src/Home.jsx
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -46,8 +48,9 @@ export default function Home({ children }) {
           display: 'flex',
           flexDirection: 'column',
           boxSizing: 'border-box',
-          height: 'calc(100vh - 15px)',
-          marginBottom: '40px',
+          height: '100vh',               // full viewport height
+          boxShadow: '2px 0 8px rgba(0,0,0,0.1)',  // subtle shadow
+          borderRight: '1px solid #ddd',
         }}
       >
         {/* Logo */}
@@ -79,7 +82,7 @@ export default function Home({ children }) {
         </nav>
       </aside>
 
-      <main style={{ flex: 1, padding: '20px' }}>
+      <main style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
         {children || <h1>Welcome!</h1>}
       </main>
     </div>

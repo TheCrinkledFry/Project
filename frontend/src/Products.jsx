@@ -1,168 +1,204 @@
-import React, { useState } from 'react';
+// src/Products.jsx
 
-export default function Products() {
+import React, { useState, useEffect } from 'react';
+import { getProducts, createProduct, updateProduct } from './utils/api';
 
-    const [products, setProducts] = useState([
-    { id: 1, name: 'Cake', img: '/productImages/cake.png', price: 10,quantity: 5, available: true },
-    { id: 2, name: 'Steak', img: '/productImages/steak.png', price: 25,quantity: 0, available: false },
-    { id: 3, name: 'Sushi', img: '/productImages/sushi.png', price: 15,qunatity: 23, available: true },
-    { id: 4, name: 'Ramen', img: '/productImages/ramen.png', price: 12,quantity: 4, available: true },
-    { id: 5, name: 'Burger', img: '/productImages/burger.png', price: 8,quantity: 0, available: false },
-    { id: 6, name: 'Pizza', img: '/productImages/pizza.png', price: 14,quantity: 2, available: true },
-    { id: 7, name: 'Chicken', img: '/productImages/chicken.png', price: 11,quantity: 35, available: true },
-    { id: 8, name: 'Lasagna', img: '/productImages/lasagna.png', price: 20,quantity: 0, available: false },
-    { id: 9, name: 'Salmon', img: '/productImages/salmon.png', price: 18,quantity: 2, available: true },
-    { id: 10, name: 'Pie', img: '/productImages/pie.png', price: 9,qunatity: 4, available: true },
-  ]);
-  
-const removeProduct = (id) => {
-  setProducts(products.filter((p) => p.id !== id));
-};
-
-
-  const imageOptions = [
-  '/productImages/cake.png',
-  '/productImages/steak.png',
-  '/productImages/sushi.png',
-  '/productImages/ramen.png',
-  '/productImages/burger.png',
-  '/productImages/pizza.png',
-  '/productImages/chicken.png',
-  '/productImages/lasagna.png',
-  '/productImages/salmon.png',
-  '/productImages/pie.png',
-];
-
-  const [search, setSearch] = useState('');
-  const [sort, setSort] = useState('');
-  const [editingProduct, setEditingProduct] = useState(null);
-
-  // Discount codes
-  const [discountCodes, setDiscountCodes] = useState([]);
-  const [discountInput, setDiscountInput] = useState({ code: '', percent: '' });
-
-  // Form state for create/edit
-  const [form, setForm] = useState({ name: '', img: '', price: '', quantity: '' });
-
-  // Filter and sort logic
-  let filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
-
-  if (sort === 'price') {
-    filtered = [...filtered].sort((a, b) => a.price - b.price);
-  } else if (sort === 'availability') {
-    filtered = [...filtered].sort((a, b) =>
-      (a.available === b.available ? 0 : a.available ? -1 : 1)
-    );
-  }
-
-  // Handle form submit
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newProduct = {
-      ...form,
-      id: editingProduct ? editingProduct.id : Date.now(),
-      price: parseFloat(form.price),
-      quantity: parseInt(form.quantity, 10),
-      available: parseInt(form.quantity, 10) > 0,
-    };
-
-    if (editingProduct) {
-      setProducts(products.map((p) => (p.id === editingProduct.id ? newProduct : p)));
-      setEditingProduct(null);
-    } else {
-      setProducts([...products, newProduct]);
-    }
-
-    setForm({ name: '', img: '', price: '', quantity: '' });
+// Styled button matching Home sidebar style
+function StyledButton({ children, onClick, disabled, type = 'button', style: userStyle, ...rest }) {
+  const [hovered, setHovered] = useState(false);
+  const baseStyle = {
+    padding: '8px 12px',
+    background: 'white',
+    border: '1px solid #007bff',
+    borderRadius: '4px',
+    color: '#007bff',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.6 : 1,
+    fontSize: '1rem',
+    transition: 'background 0.2s, color 0.2s',
+    ...userStyle,
   };
-
-  const startEdit = (product) => {
-    setEditingProduct(product);
-    setForm(product);
-  };
-
-  const handleDiscountSubmit = (e) => {
-    e.preventDefault();
-    setDiscountCodes([...discountCodes, discountInput]);
-    setDiscountInput({ code: '', percent: '' });
-  };
-
+  const hoverStyle = disabled
+    ? {}
+    : {
+        background: '#007bff',
+        color: 'white',
+      };
   return (
-    <div style={{ fontFamily: 'sans-serif', padding: '20px' }}>
-      {/* Search & Sort */}
-      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-        <input
-          type="text"
-          placeholder="Search by name..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <select value={sort} onChange={(e) => setSort(e.target.value)}>
-          <option value="">Sort...</option>
-          <option value="price">Sort by Price</option>
-          <option value="availability">Sort by Availability</option>
-        </select>
-      </div>
-
-      {/* Product Management Form */}
-      <form onSubmit={handleSubmit} style={{ marginBottom: '20px', border: '1px solid #ccc', padding: '10px' }}>
-        <h3>{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
-        <input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <select
-          value={form.img}
-          onChange={(e) => setForm({ ...form, img: e.target.value })}
-        >
-        <option value="">Select an image</option>
-          {imageOptions.map((imgPath) => (
-            <option key={imgPath} value={imgPath}>
-              {imgPath.split('/').pop()} {/* show only file name */}
-            </option>
-        ))}
-      </select>
-
-        
-        <input placeholder="Price" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-        <input placeholder="Quantity" type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
-        <button type="submit">{editingProduct ? 'Update' : 'Add'}</button>
-      </form>
-
-      {/* Discount Code Form */}
-      <form onSubmit={handleDiscountSubmit} style={{ marginBottom: '20px', border: '1px solid #ccc', padding: '10px' }}>
-        <h3>Create Discount Code</h3>
-        <input placeholder="Code" value={discountInput.code} onChange={(e) => setDiscountInput({ ...discountInput, code: e.target.value })} />
-        <input placeholder="Percent Off" type="number" value={discountInput.percent} onChange={(e) => setDiscountInput({ ...discountInput, percent: e.target.value })} />
-        <button type="submit">Add Code</button>
-      </form>
-
-      {/* Product Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
-        {filtered.map((p) => (
-          <div key={p.id} style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
-            <img src={p.img} alt={p.name} style={{ width: '100%', height: 'auto' }} />
-            <p><strong>{p.name}</strong></p>
-            <p>${p.price}</p>
-            <p>Qty: {p.quantity}</p>
-            <p style={{ color: p.available ? 'green' : 'red' }}>{p.available ? 'In stock' : 'Out of stock'}</p>
-            
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-              <button onClick={() => startEdit(p)}>Edit</button>
-              <button
-                onClick={() => removeProduct(p.id)}
-                style={{ color: 'white', backgroundColor: 'red' }}
-              >
-                Remove
-              </button>
-            </div>
-
-            
-          </div>
-        ))}
-      </div>
-      
-    </div>
+    <button
+      type={type}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={hovered ? { ...baseStyle, ...hoverStyle } : baseStyle}
+      {...rest}
+    >
+      {children}
+    </button>
   );
 }
 
+export default function Products() {
+  const [products, setProducts] = useState([]);
+  const [search, setSearch] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: '', price: '', quantity: '', imageUrl: '', description: '', discontinued: false
+  });
+  const token = localStorage.getItem('authToken');
+  const API = process.env.REACT_APP_API_URL;
+
+  useEffect(() => {
+    getProducts(token)
+      .then(setProducts)
+      .catch(console.error);
+  }, [token]);
+
+  const handleAdd = async e => {
+    e.preventDefault();
+    const form = e.target;
+    const payload = {
+      name: form.name.value.trim(),
+      price: parseFloat(form.price.value),
+      quantity: parseInt(form.quantity.value, 10),
+      available: true,
+      imageUrl: form.imageUrl.value.trim()
+    };
+    try {
+      const newProd = await createProduct(payload, token);
+      setProducts(prev => [...prev, newProd]);
+      form.reset();
+    } catch (err) {
+      console.error('Failed to add product:', err);
+    }
+  };
+
+  const startEditing = p => {
+    setEditingId(p.id);
+    setEditForm({
+      name: p.name || '',
+      price: p.price?.toString() || '',
+      quantity: p.quantity?.toString() || '',
+      imageUrl: p.imageUrl || '',
+      description: p.description || '',
+      discontinued: p.discontinued || false
+    });
+  };
+
+  const handleEditChange = e => {
+    const { name, value, type, checked } = e.target;
+    setEditForm(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleEditSubmit = async e => {
+    e.preventDefault();
+    try {
+      const data = {
+        name: editForm.name.trim(),
+        price: parseFloat(editForm.price),
+        quantity: parseInt(editForm.quantity, 10),
+        imageUrl: editForm.imageUrl.trim(),
+        description: editForm.description.trim(),
+        discontinued: editForm.discontinued
+      };
+      const updated = await updateProduct(editingId, data, token);
+      setProducts(prev => prev.map(p => (p.id === editingId ? updated : p)));
+      setEditingId(null);
+    } catch (err) {
+      console.error('Failed to update product:', err);
+    }
+  };
+
+  const handleCancel = () => setEditingId(null);
+
+  const filtered = products.filter(p =>
+    (p.name || '').toLowerCase().includes(search.toLowerCase())
+  );
+
+  const gridStyle = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+    gap: '2rem',
+    marginTop: '1rem'
+  };
+  const cardStyle = {
+    display: 'flex',          // new: flex layout
+    flexDirection: 'column',  // vertical stacking
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  };
+  const imgStyle = {
+    width: '100%',
+    height: '350px',
+    objectFit: 'cover'
+  };
+  const cardContentStyle = { padding: '1rem', flexGrow: 1 };
+  const labelStyle = { color: 'red', fontWeight: 'bold', display: 'block', margin: '0.5rem 0' };
+
+  return (
+    <div style={{ padding: '1rem' }}>
+      <h2>Products</h2>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+        <form onSubmit={handleAdd} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <input name="name" placeholder="Name" required style={{ padding: '0.5rem' }} />
+          <input name="price" type="number" step="0.01" placeholder="Price" required style={{ padding: '0.5rem' }} />
+          <input name="quantity" type="number" placeholder="Qty" required style={{ padding: '0.5rem' }} />
+          <input name="imageUrl" placeholder="Image URL" required style={{ padding: '0.5rem', width: '300px' }} />
+          <StyledButton type="submit">Add</StyledButton>
+        </form>
+        <input
+          type="text"
+          placeholder="Search..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ padding: '0.5rem', marginLeft: 'auto', flexGrow: 1 }}
+        />
+      </div>
+      <div style={gridStyle}>
+        {filtered.map(p => (
+          <div key={p.id} style={cardStyle}>
+            {editingId === p.id ? (
+              <form onSubmit={handleEditSubmit} style={cardContentStyle}>
+                <input name="name" value={editForm.name} onChange={handleEditChange} required style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }} />
+                <input name="price" type="number" step="0.01" value={editForm.price} onChange={handleEditChange} required style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }} />
+                <input name="quantity" type="number" value={editForm.quantity} onChange={handleEditChange} required style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }} />
+                <input name="imageUrl" value={editForm.imageUrl} onChange={handleEditChange} required style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }} />
+                <textarea name="description" placeholder="Description" value={editForm.description} onChange={handleEditChange} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }} />
+                <label style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <input type="checkbox" name="discontinued" checked={editForm.discontinued} onChange={handleEditChange} style={{ marginRight: '0.5rem' }} />
+                  Discontinued
+                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <StyledButton type="submit">Save</StyledButton>
+                  <StyledButton type="button" onClick={handleCancel}>Cancel</StyledButton>
+                </div>
+              </form>
+            ) : (
+              <>
+                <img src={`${API}${p.imageUrl}`} alt={p.name} style={imgStyle} />
+                <div style={cardContentStyle}>
+                  <h3 style={{ margin: '0 0 0.5rem 0' }}>{p.name}</h3>
+                  <p style={{ margin: '0.25rem 0' }}>${p.price.toFixed(2)}</p>
+                  <p style={{ margin: '0.25rem 0' }}>Stock: {p.quantity}</p>
+                  {p.quantity === 0 && <span style={labelStyle}>Out of Stock</span>}
+                  {p.discontinued && <span style={labelStyle}>Discontinued</span>}
+                  {p.description && <p style={{ margin: '0.25rem 0' }}>{p.description}</p>}
+                </div>
+                <div style={{ padding: '1rem' }}>
+                  <StyledButton onClick={() => startEditing(p)}>Edit</StyledButton>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 

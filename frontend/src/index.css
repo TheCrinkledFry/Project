@@ -1,0 +1,15 @@
+/* src/index.css */
+
+/* Reset default margins/padding and prevent unwanted scrolling */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Consistent box-sizing */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+

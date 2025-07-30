@@ -1,0 +1,102 @@
+[
+  {
+    "id": 1,
+    "name": "Burger",
+    "price": 12.99,
+    "quantity": 0,
+    "available": false,
+    "imageUrl": "/images/burger.png",
+    "description": "A classic beef patty grilled to order and nestled in a toasted bun with crisp lettuce, ripe tomato, and your choice of condiments.",
+    "discontinued": false
+  },
+  {
+    "id": 2,
+    "name": "Cake",
+    "price": 34.99,
+    "quantity": 44,
+    "available": true,
+    "imageUrl": "/images/cake.png",
+    "description": "A moist, multi‑layered dessert cake slathered in creamy frosting, perfect for celebrating any occasion.",
+    "discontinued": false
+  },
+  {
+    "id": 3,
+    "name": "Chicken",
+    "price": 7.99,
+    "quantity": 191,
+    "available": true,
+    "imageUrl": "/images/chicken.png",
+    "description": "Succulent rotisserie chicken, slow‑roasted over a wood fire until the skin is crisp and golden, with tender, juicy meat infused with aromatic herbs.",
+    "discontinued": false
+  },
+  {
+    "id": 4,
+    "name": "Lasagna",
+    "price": 19.99,
+    "quantity": 56,
+    "available": true,
+    "imageUrl": "/images/lasagna.png",
+    "description": "Hearty layers of pasta, rich meat (or vegetable) sauce, and melted cheese, baked until bubbly and golden.",
+    "discontinued": false
+  },
+  {
+    "id": 5,
+    "name": "Pie",
+    "price": 24.99,
+    "quantity": 95,
+    "available": true,
+    "imageUrl": "/images/pie.png",
+    "description": "A flaky pastry shell filled with sweet seasonal fruit (or savory ingredients), served warm or chilled with a crisp crust.",
+    "discontinued": false
+  },
+  {
+    "id": 6,
+    "name": "Pizza",
+    "price": 17.99,
+    "quantity": 44,
+    "available": true,
+    "imageUrl": "/images/pizza.png",
+    "description": "Hand‑tossed dough topped with tangy tomato sauce, melted mozzarella, and your favorite toppings, baked to a perfect crisp.",
+    "discontinued": false
+  },
+  {
+    "id": 7,
+    "name": "Ramen",
+    "price": 13.99,
+    "quantity": 191,
+    "available": true,
+    "imageUrl": "/images/ramen.png",
+    "description": "A steaming bowl of Japanese noodles in a savory broth, garnished with scallions, soft‑boiled egg, and tender slices of pork or tofu.",
+    "discontinued": false
+  },
+  {
+    "id": 8,
+    "name": "Salmon",
+    "price": 18.99,
+    "quantity": 56,
+    "available": true,
+    "imageUrl": "/images/salmon.png",
+    "description": "A succulent salmon fillet, seasoned and pan‑seared or oven‑baked, served with a squeeze of lemon and fresh herbs.",
+    "discontinued": false
+  },
+  {
+    "id": 9,
+    "name": "Steak",
+    "price": 49.99,
+    "quantity": 44,
+    "available": true,
+    "imageUrl": "/images/steak.png",
+    "description": "A juicy cut of steak, seared to your preferred doneness and seasoned simply with salt, pepper, and a hint of garlic.",
+    "discontinued": false
+  },
+  {
+    "id": 10,
+    "name": "Sushi",
+    "price": 11.99,
+    "quantity": 191,
+    "available": true,
+    "imageUrl": "/images/sushi.png",
+    "description": "An assortment of vinegared rice rolls or nigiri topped with fresh fish and vegetables, accompanied by soy sauce, wasabi, and pickled ginger.",
+    "discontinued": false
+  }
+]
