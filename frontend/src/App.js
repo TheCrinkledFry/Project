@@ -21,7 +21,7 @@ export default function App() {
         <Route element={<PrivateRoute />}>  
           <Route
             path="dashboard"
-            element={<Home><h1>Welcome!</h1></Home>}
+            element={<Home />}
           />
           <Route
             path="products"

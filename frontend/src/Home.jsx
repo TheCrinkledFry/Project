@@ -127,7 +127,29 @@ export default function Home({ children }) {
       </aside>
 
       <main style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
-        {children || <h1>Welcome!</h1>}
+        {children || (
+          <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
+            <img
+              src="/shopping_cart.png"
+              alt="Company Logo"
+              style={{
+                width: 130,
+                marginBottom: 24,
+                filter: 'drop-shadow(0px 2px 6px rgba(0,0,0,0.09))'
+              }}
+            />
+            <h1 style={{ fontSize: '2.4rem', marginBottom: 12, color: '#23366b' }}>
+              Welcome to the Internal Portal
+            </h1>
+            <p style={{ fontSize: '1.2rem', color: '#4b4b4b', marginBottom: 0 }}>
+              This is your one-stop dashboard to manage products, orders, and discounts.
+              <br /><br />
+              Use the sidebar to navigate between sections. You can view, add, and edit products, keep track of all customer orders, and manage discount codes. If you are a manager, you’ll have access to even more advanced controls.
+              <br /><br />
+              Questions? Contact your system administrator.
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );

@@ -62,7 +62,9 @@ export default function Products() {
       price: parseFloat(form.price.value),
       quantity: parseInt(form.quantity.value, 10),
       available: true,
-      imageUrl: form.imageUrl.value.trim()
+      imageUrl: form.imageUrl.value.trim(),
+      description: form.description.value.trim(),
+      discontinued: false
     };
 
     try {
@@ -86,6 +88,14 @@ export default function Products() {
     });
   };
 
+  const handleEditChange = e => {
+    const { name, value, type, checked } = e.target;
+    setEditForm(f => ({
+      ...f,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
   const handleEditSubmit = async e => {
     e.preventDefault();
     try {
@@ -95,7 +105,7 @@ export default function Products() {
         quantity: parseInt(editForm.quantity, 10),
         imageUrl: editForm.imageUrl.trim(),
         description: editForm.description.trim(),
-        discontinued: editForm.discontinued
+        discontinued: !!editForm.discontinued
       };
       const updated = await updateProduct(editingId, data);
       setProducts(prev => prev.map(p => (p.id === editingId ? updated : p)));
@@ -104,6 +114,8 @@ export default function Products() {
       console.error('Failed to update product:', err);
     }
   };
+
+  const handleCancel = () => setEditingId(null);
 
   const filtered = products.filter(p =>
     (p.name || '').toLowerCase().includes(search.toLowerCase())
@@ -139,6 +151,16 @@ export default function Products() {
           <input name="price" type="number" step="0.01" placeholder="Price" required style={{ padding: '0.5rem' }} />
           <input name="quantity" type="number" placeholder="Qty" required style={{ padding: '0.5rem' }} />
           <input name="imageUrl" placeholder="Image URL (e.g. /images/burger.png)" required style={{ padding: '0.5rem', width: '300px' }} />
+          <textarea
+            name="description"
+            placeholder="Description"
+            style={{
+              padding: '0.5rem',
+              width: '250px',
+              minHeight: '60px',
+              resize: 'vertical'
+            }}
+          />
           <StyledButton type="submit">Add</StyledButton>
         </form>
         <input
@@ -154,7 +176,89 @@ export default function Products() {
           <div key={p.id} style={cardStyle}>
             {editingId === p.id ? (
               <form onSubmit={handleEditSubmit} style={cardContentStyle}>
-                {/* inline edit form inputs */}
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <label>
+                    Name:{' '}
+                    <input
+                      name="name"
+                      value={editForm.name}
+                      onChange={handleEditChange}
+                      required
+                      style={{ padding: '0.5rem', width: '90%' }}
+                    />
+                  </label>
+                </div>
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <label>
+                    Price:{' '}
+                    <input
+                      name="price"
+                      type="number"
+                      step="0.01"
+                      value={editForm.price}
+                      onChange={handleEditChange}
+                      required
+                      style={{ padding: '0.5rem', width: '90%' }}
+                    />
+                  </label>
+                </div>
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <label>
+                    Quantity:{' '}
+                    <input
+                      name="quantity"
+                      type="number"
+                      value={editForm.quantity}
+                      onChange={handleEditChange}
+                      required
+                      style={{ padding: '0.5rem', width: '90%' }}
+                    />
+                  </label>
+                </div>
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <label>
+                    Image URL:{' '}
+                    <input
+                      name="imageUrl"
+                      value={editForm.imageUrl}
+                      onChange={handleEditChange}
+                      required
+                      style={{ padding: '0.5rem', width: '90%' }}
+                    />
+                  </label>
+                </div>
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <label>
+                    Description:{' '}
+                    <textarea
+                      name="description"
+                      value={editForm.description}
+                      onChange={handleEditChange}
+                      style={{
+                        padding: '0.5rem',
+                        width: '90%',
+                        minHeight: '60px',
+                        resize: 'vertical'
+                      }}
+                    />
+                  </label>
+                </div>
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <label>
+                    Discontinued:{' '}
+                    <input
+                      name="discontinued"
+                      type="checkbox"
+                      checked={!!editForm.discontinued}
+                      onChange={handleEditChange}
+                      style={{ marginLeft: '0.5rem' }}
+                    />
+                  </label>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                  <StyledButton type="submit">Save</StyledButton>
+                  <StyledButton type="button" onClick={handleCancel}>Cancel</StyledButton>
+                </div>
               </form>
             ) : (
               <>
@@ -165,9 +269,9 @@ export default function Products() {
                   <p style={{ margin: '0.25rem 0' }}>Stock: {p.quantity}</p>
                   {p.quantity === 0 && <span style={{ color: 'red', fontWeight: 'bold', display: 'block', margin: '0.5rem 0' }}>Out of Stock</span>}
                   {p.discontinued && <span style={{ color: 'red', fontWeight: 'bold', display: 'block', margin: '0.5rem 0' }}>Discontinued</span>}
-                  {p.description && <p style={{ margin: '0.25rem 0' }}>{p.description}</p>}
+                  {p.description && <p style={{ margin: '0.25rem 0', maxHeight: 100, overflowY: 'auto' }}>{p.description}</p>}
                 </div>
-                <div style={{ padding: '1rem' }}>
+                <div style={{ padding: '1rem', marginTop: 'auto' }}>
                   <StyledButton onClick={() => startEditing(p)}>Edit</StyledButton>
                 </div>
               </>
