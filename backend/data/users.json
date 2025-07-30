@@ -10,6 +10,18 @@
     "email": "employee1@company.com",
     "password": "password123",
     "role": "employee"
+  },
+  {
+    "id": 3,
+    "email": "noah@group8.com",
+    "password": "password",
+    "role": "manager"
+  },
+  {
+    "id": 2,
+    "email": "gabriel@group8.com",
+    "password": "password",
+    "role": "employee"
   }
 ]
 
