@@ -1,16 +1,25 @@
 // src/Home.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Home({ children }) {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(null);
+  const [user, setUser] = useState({ email: '', role: '' });
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    navigate('/', { replace: true });
-  };
+  // On mount, decode user from JWT
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUser({ email: payload.email, role: payload.role });
+      } catch (e) {
+        console.error('Failed to parse token', e);
+      }
+    }
+  }, []);
 
   const baseStyle = {
     width: '100%',
@@ -31,12 +40,22 @@ export default function Home({ children }) {
     color: 'white',
   };
 
-  const buttons = [
+  const navButtons = [
     { key: 'dashboard', label: 'Home', action: () => navigate('/dashboard') },
     { key: 'products',  label: 'Products', action: () => navigate('/products') },
-    { key: 'orders',    label: 'Orders', action: () => navigate('/orders') },
-    { key: 'logout',    label: 'Logout', action: handleLogout },
+    { key: 'orders',    label: 'Orders',  action: () => navigate('/orders') },
+    { key: 'discounts', label: 'Discounts',  action: () => navigate('/discounts') }
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    navigate('/', { replace: true });
+  };
+
+  // Capitalize role
+  const displayRole = user.role
+    ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+    : '';
 
   return (
     <div style={{ display: 'flex', height: '100vh', fontFamily: 'sans-serif' }}>
@@ -48,9 +67,9 @@ export default function Home({ children }) {
           display: 'flex',
           flexDirection: 'column',
           boxSizing: 'border-box',
-          height: '100vh',               // full viewport height
-          boxShadow: '2px 0 8px rgba(0,0,0,0.1)',  // subtle shadow
-          borderRight: '1px solid #ddd',
+          height: '100vh',
+          boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
+          borderRight: '1px solid #000',    // line now black
         }}
       >
         {/* Logo */}
@@ -64,8 +83,8 @@ export default function Home({ children }) {
         </div>
 
         {/* Nav buttons */}
-        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-          {buttons.map(({ key, label, action }) => (
+        <nav style={{ display: 'flex', flexDirection: 'column' }}>
+          {navButtons.map(({ key, label, action }) => (
             <button
               key={key}
               onClick={action}
@@ -80,6 +99,31 @@ export default function Home({ children }) {
             </button>
           ))}
         </nav>
+
+        {/* Spacer to push logout and user info to bottom */}
+        <div style={{ flexGrow: 1 }} />
+
+        {/* Logout above black line */}
+        <button
+          onClick={handleLogout}
+          onMouseEnter={() => setHovered('logout')}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            ...baseStyle,
+            ...(hovered === 'logout' ? hoverStyle : {}),
+          }}
+        >
+          Logout
+        </button>
+
+        {/* Black separator line */}
+        <div style={{ borderTop: '1px solid #000', margin: '16px 0' }} />
+
+        {/* User info */}
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ margin: '4px 0', fontWeight: 'bold' }}>{user.email}</p>
+          <p style={{ margin: '4px 0', color: '#555' }}>{displayRole}</p>
+        </div>
       </aside>
 
       <main style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>

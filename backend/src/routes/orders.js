@@ -4,19 +4,33 @@ const express = require('express');
 const router  = express.Router();
 const { read, write } = require('../fileDb');
 
-// GET /api/orders → read orders.json and expand each item with its product details
+// GET /api/orders → read orders.json, expand each item with product details, compute total and include date
 router.get('/', async (req, res) => {
   try {
     const orders   = await read('orders');
     const products = await read('products');
 
-    const withDetails = orders.map(o => ({
-      ...o,
-      items: o.items.map(i => ({
-        ...i,
-        product: products.find(p => p.id === i.productId) || null
-      }))
-    }));
+    const withDetails = orders.map(o => {
+      // Expand items with product data
+      const items = o.items.map(i => {
+        const product = products.find(p => p.id === i.productId) || {};
+        return {
+          productId: i.productId,
+          quantity: i.quantity,
+          product: product
+        };
+      });
+      // Compute total
+      const total = items.reduce(
+        (sum, item) => sum + (item.product.price || 0) * item.quantity,
+        0
+      );
+      return {
+        ...o,
+        items,
+        total: parseFloat(total.toFixed(2)) // round to 2 decimals
+      };
+    });
 
     res.json(withDetails);
   } catch (err) {
@@ -24,7 +38,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/orders/:id/execute → mark order executed, decrement stock, then return expanded order
+// POST /api/orders/:id/execute → mark order executed, decrement stock, then return expanded order with total
 router.post('/:id/execute', async (req, res) => {
   try {
     const orders   = await read('orders');
@@ -47,21 +61,24 @@ router.post('/:id/execute', async (req, res) => {
       }
     });
 
-    // Update order status
+    // Update order status and date
     order.status = 'Executed';
+    order.date   = new Date().toISOString();
 
     // Persist changes
     await write('products', products);
     await write('orders', orders);
 
-    // Build the expanded order object (with product details)
-    const detailedOrder = {
-      ...order,
-      items: order.items.map(i => ({
-        ...i,
-        product: products.find(p => p.id === i.productId) || null
-      }))
-    };
+    // Rebuild expanded order with total
+    const items = order.items.map(i => {
+      const product = products.find(p => p.id === i.productId) || {};
+      return { productId: i.productId, quantity: i.quantity, product };
+    });
+    const total = items.reduce(
+      (sum, item) => sum + (item.product.price || 0) * item.quantity,
+      0
+    );
+    const detailedOrder = { ...order, items, total: parseFloat(total.toFixed(2)) };
 
     res.json(detailedOrder);
   } catch (err) {

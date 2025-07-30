@@ -1,35 +1,22 @@
-// backend/src/routes/discounts.js
-
 const express = require('express');
-const router  = express.Router();
+const router = express.Router();
 const { read, write } = require('../fileDb');
 
-// GET /api/discounts → read all discounts from discounts.json
+// GET all codes
 router.get('/', async (req, res) => {
-  try {
-    const discounts = await read('discounts');
-    res.json(discounts);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to read discounts' });
-  }
+  const codes = await read('discounts');
+  res.json(codes);
 });
 
-// POST /api/discounts → add a new discount to discounts.json
+// POST create code
 router.post('/', async (req, res) => {
-  try {
-    const discounts = await read('discounts');
-    const nextId = discounts.length
-      ? Math.max(...discounts.map(d => d.id)) + 1
-      : 1;
-
-    const newDiscount = { id: nextId, ...req.body };
-    discounts.push(newDiscount);
-    await write('discounts', discounts);
-
-    res.status(201).json(newDiscount);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to save discount' });
-  }
+  const { code, amount } = req.body;
+  const list = await read('discounts');
+  const nextId = list.length ? Math.max(...list.map(c => c.id)) + 1 : 1;
+  const newCode = { id: nextId, code, amount };
+  list.push(newCode);
+  await write('discounts', list);
+  res.status(201).json(newCode);
 });
 
 module.exports = router;

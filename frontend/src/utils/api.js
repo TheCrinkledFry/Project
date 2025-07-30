@@ -1,15 +1,16 @@
 // src/utils/api.js
-const BASE = process.env.REACT_APP_API_URL;
 
-async function request(path, opts = {}) {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(opts.token ? { Authorization: `Bearer ${opts.token}` } : {})
-    },
-    ...opts
-  });
-  if (!res.ok) throw await res.json();
+const API_URL = process.env.REACT_APP_API_URL || '';
+
+async function request(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = localStorage.getItem('authToken');
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${API_URL}${path}`, { headers, ...options });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: res.statusText }));
+    throw error;
+  }
   return res.json();
 }
 
@@ -20,48 +21,48 @@ export function login(email, password) {
   });
 }
 
-export function getProducts(token) {
-  return request('/api/products', { token });
+export function register(email, password, role = 'employee') {
+  return request('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ email, password, role })
+  });
 }
 
-export function createProduct(data, token) {
-  return fetch(`${BASE}/api/products`, {
+export function getProducts() {
+  return request('/api/products');
+}
+
+export function createProduct(data) {
+  return request('/api/products', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
-    },
     body: JSON.stringify(data)
-  }).then(r => r.json());
-}
-
-export function getDiscounts(token) {
-  return request('/api/discounts', { token });
-}
-
-export function createDiscount(code, percent, token) {
-  return request('/api/discounts', {
-    method: 'POST',
-    token,
-    body: JSON.stringify({ code, percent })
   });
 }
 
-export function getOrders(token) {
-  return request('/api/orders', { token });
-}
-
-export function executeOrder(id, token) {
-  return request(`/api/orders/${id}/execute`, {
-    method: 'POST',
-    token
-  });
-}
-
-export function updateProduct(id, data, token) {
+export function updateProduct(id, data) {
   return request(`/api/products/${id}`, {
     method: 'PUT',
-    token,
+    body: JSON.stringify(data)
+  });
+}
+
+export function getOrders() {
+  return request('/api/orders');
+}
+
+export function executeOrder(id) {
+  return request(`/api/orders/${id}/execute`, {
+    method: 'POST'
+  });
+}
+
+export function getDiscounts() {
+  return request('/api/discounts');
+}
+
+export function createDiscount(data) {
+  return request('/api/discounts', {
+    method: 'POST',
     body: JSON.stringify(data)
   });
 }

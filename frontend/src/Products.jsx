@@ -46,14 +46,13 @@ export default function Products() {
   const [editForm, setEditForm] = useState({
     name: '', price: '', quantity: '', imageUrl: '', description: '', discontinued: false
   });
-  const token = localStorage.getItem('authToken');
   const API = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    getProducts(token)
+    getProducts()
       .then(setProducts)
       .catch(console.error);
-  }, [token]);
+  }, []);
 
   const handleAdd = async e => {
     e.preventDefault();
@@ -65,8 +64,9 @@ export default function Products() {
       available: true,
       imageUrl: form.imageUrl.value.trim()
     };
+
     try {
-      const newProd = await createProduct(payload, token);
+      const newProd = await createProduct(payload);
       setProducts(prev => [...prev, newProd]);
       form.reset();
     } catch (err) {
@@ -86,14 +86,6 @@ export default function Products() {
     });
   };
 
-  const handleEditChange = e => {
-    const { name, value, type, checked } = e.target;
-    setEditForm(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
   const handleEditSubmit = async e => {
     e.preventDefault();
     try {
@@ -105,15 +97,13 @@ export default function Products() {
         description: editForm.description.trim(),
         discontinued: editForm.discontinued
       };
-      const updated = await updateProduct(editingId, data, token);
+      const updated = await updateProduct(editingId, data);
       setProducts(prev => prev.map(p => (p.id === editingId ? updated : p)));
       setEditingId(null);
     } catch (err) {
       console.error('Failed to update product:', err);
     }
   };
-
-  const handleCancel = () => setEditingId(null);
 
   const filtered = products.filter(p =>
     (p.name || '').toLowerCase().includes(search.toLowerCase())
@@ -126,8 +116,8 @@ export default function Products() {
     marginTop: '1rem'
   };
   const cardStyle = {
-    display: 'flex',          // new: flex layout
-    flexDirection: 'column',  // vertical stacking
+    display: 'flex',
+    flexDirection: 'column',
     border: '1px solid #ddd',
     borderRadius: '8px',
     overflow: 'hidden',
@@ -139,7 +129,6 @@ export default function Products() {
     objectFit: 'cover'
   };
   const cardContentStyle = { padding: '1rem', flexGrow: 1 };
-  const labelStyle = { color: 'red', fontWeight: 'bold', display: 'block', margin: '0.5rem 0' };
 
   return (
     <div style={{ padding: '1rem' }}>
@@ -149,7 +138,7 @@ export default function Products() {
           <input name="name" placeholder="Name" required style={{ padding: '0.5rem' }} />
           <input name="price" type="number" step="0.01" placeholder="Price" required style={{ padding: '0.5rem' }} />
           <input name="quantity" type="number" placeholder="Qty" required style={{ padding: '0.5rem' }} />
-          <input name="imageUrl" placeholder="Image URL" required style={{ padding: '0.5rem', width: '300px' }} />
+          <input name="imageUrl" placeholder="Image URL (e.g. /images/burger.png)" required style={{ padding: '0.5rem', width: '300px' }} />
           <StyledButton type="submit">Add</StyledButton>
         </form>
         <input
@@ -165,19 +154,7 @@ export default function Products() {
           <div key={p.id} style={cardStyle}>
             {editingId === p.id ? (
               <form onSubmit={handleEditSubmit} style={cardContentStyle}>
-                <input name="name" value={editForm.name} onChange={handleEditChange} required style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }} />
-                <input name="price" type="number" step="0.01" value={editForm.price} onChange={handleEditChange} required style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }} />
-                <input name="quantity" type="number" value={editForm.quantity} onChange={handleEditChange} required style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }} />
-                <input name="imageUrl" value={editForm.imageUrl} onChange={handleEditChange} required style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }} />
-                <textarea name="description" placeholder="Description" value={editForm.description} onChange={handleEditChange} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }} />
-                <label style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <input type="checkbox" name="discontinued" checked={editForm.discontinued} onChange={handleEditChange} style={{ marginRight: '0.5rem' }} />
-                  Discontinued
-                </label>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <StyledButton type="submit">Save</StyledButton>
-                  <StyledButton type="button" onClick={handleCancel}>Cancel</StyledButton>
-                </div>
+                {/* inline edit form inputs */}
               </form>
             ) : (
               <>
@@ -186,8 +163,8 @@ export default function Products() {
                   <h3 style={{ margin: '0 0 0.5rem 0' }}>{p.name}</h3>
                   <p style={{ margin: '0.25rem 0' }}>${p.price.toFixed(2)}</p>
                   <p style={{ margin: '0.25rem 0' }}>Stock: {p.quantity}</p>
-                  {p.quantity === 0 && <span style={labelStyle}>Out of Stock</span>}
-                  {p.discontinued && <span style={labelStyle}>Discontinued</span>}
+                  {p.quantity === 0 && <span style={{ color: 'red', fontWeight: 'bold', display: 'block', margin: '0.5rem 0' }}>Out of Stock</span>}
+                  {p.discontinued && <span style={{ color: 'red', fontWeight: 'bold', display: 'block', margin: '0.5rem 0' }}>Discontinued</span>}
                   {p.description && <p style={{ margin: '0.25rem 0' }}>{p.description}</p>}
                 </div>
                 <div style={{ padding: '1rem' }}>

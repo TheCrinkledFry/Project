@@ -1,0 +1,15 @@
+[
+  {
+    "id": 1,
+    "email": "hayes@group8.com",
+    "password": "password",
+    "role": "manager"
+  },
+  {
+    "id": 2,
+    "email": "employee1@company.com",
+    "password": "password123",
+    "role": "employee"
+  }
+]
+

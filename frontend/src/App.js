@@ -1,84 +1,47 @@
 // src/App.js
-import React, { useState } from 'react';
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useNavigate
-} from 'react-router-dom';
 
-import LoginPage from './Login';           // src/Login.jsx
-import Home from './Home';                 // src/Home.jsx
-import PrivateRoute from './PrivateRoute'; // src/PrivateRoute.jsx
-import Products from './Products';         // src/Products.jsx
-import Orders from './Orders';             // src/Products.jsx
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-function App() {
+import Login from './Login';
+import Home from './Home';
+import PrivateRoute from './PrivateRoute';
+import Products from './Products';
+import Orders from './Orders';
+import Discounts from './Discounts';
+
+export default function App() {
   return (
     <Router>
       <Routes>
-        {/* public login */}
-        <Route path="/" element={<LoginWrapper />} />
+        {/* Public login route */}
+        <Route path="/" element={<Login />} />
 
-        {/* protected dashboard (home) */}
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <Home />
-            </PrivateRoute>
-          }
-        />
+        {/* Protected routes */}
+        <Route element={<PrivateRoute />}>  
+          <Route
+            path="dashboard"
+            element={<Home><h1>Welcome!</h1></Home>}
+          />
+          <Route
+            path="products"
+            element={<Home><Products /></Home>}
+          />
+          <Route
+            path="orders"
+            element={<Home><Orders /></Home>}
+          />
+          <Route
+            path="discounts"
+            element={<Home><Discounts /></Home>}
+          />
+          {/* Redirect /app to dashboard, if you have /app prefix, otherwise consider default */}
+        </Route>
 
-        {/* protected products page */}
-        <Route
-          path="/products"
-          element={
-            <PrivateRoute>
-              <Home>
-                <Products />
-              </Home>
-            </PrivateRoute>
-          }
-        />
-
-        {/* protected orders page */}
-        <Route
-          path="/orders"
-          element={
-            <PrivateRoute>
-              <Home>
-                <Orders />
-              </Home>
-            </PrivateRoute>
-          }
-        />
+        {/* Fallback to login */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
 }
-
-function LoginWrapper() {
-  const navigate = useNavigate();
-  const [error, setError] = useState('');
-
-  const handleLogin = ({ email, password }) => {
-    // stubbed credentials for testing
-    if (email === 'user@test.com' && password === 'password123') {
-      localStorage.setItem('authToken', 'dummy-token');
-      navigate('/dashboard');
-    } else {
-      setError('Invalid email or password');
-    }
-  };
-
-  return (
-    <LoginPage
-      onLogin={handleLogin}
-      errorMessage={error}
-    />
-  );
-}
-
-export default App;
 
