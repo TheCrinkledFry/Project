@@ -1,0 +1,208 @@
+package main
+
+import (
+	"database/sql"
+	"fmt"
+	"log"
+	"net/http"
+	"strings"
+
+	"github.com/gin-contrib/cors" // Add this import for CORS support
+	"github.com/gin-gonic/gin"
+
+	_ "github.com/go-sql-driver/mysql"
+)
+
+// Product represents the structure of a product in the database
+type Product struct {
+	ID           int     `json:"id"`
+	Name         string  `json:"name"`
+	Description  string  `json:"description"`
+	Price        float64 `json:"price"`
+	Quantity     int     `json:"quantity"`
+	IsActive     bool    `json:"is_active"`
+	ImageURL     string  `json:"image_url"`
+	Discontinued bool    `json:"discontinued"`
+}
+
+// LoginRequest represents the incoming login request structure
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// LoginResponse represents the outgoing response after a login attempt
+type LoginResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Name    string `json:"name,omitempty"` // Include the name (first name) in the response
+	Role    string `json:"role,omitempty"` // Include the role in the response
+}
+
+// Global variable for MySQL DB connection
+var db *sql.DB
+
+// Initialize the MySQL database connection
+func init() {
+	var err error
+	// Open the MySQL database connection (replace with your credentials)
+	dsn := "root:Jfyetdhfyd@tcp(127.0.0.1:3306)/backend" // Make sure this is correct
+	db, err = sql.Open("mysql", dsn)
+	if err != nil {
+		log.Fatal("Error connecting to the database:", err)
+	}
+
+	// Ensure the database is reachable
+	if err = db.Ping(); err != nil {
+		log.Fatal("Error pinging the database:", err)
+	}
+}
+
+// checkCredentials compares the provided email and password with the database
+func checkCredentials(email, password string) (string, string, bool, error) {
+	var dbPassword, dbName, dbRole string
+
+	// Query the database to get the stored password, name, and role for the given email
+	err := db.QueryRow("SELECT password, name, role FROM accounts WHERE email = ?", email).Scan(&dbPassword, &dbName, &dbRole)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", "", false, fmt.Errorf("no user found with that email")
+		}
+		return "", "", false, err
+	}
+
+	// Direct comparison of plain-text password (no encryption)
+	if dbPassword != password {
+		return "", "", false, fmt.Errorf("incorrect password")
+	}
+
+	return dbName, dbRole, true, nil // Return the name, role, and validity
+}
+
+// loginHandler handles the login POST request
+func loginHandler(c *gin.Context) {
+	var req LoginRequest
+
+	// Parse the incoming JSON request
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, LoginResponse{
+			Success: false,
+			Message: "Invalid request body",
+		})
+		return
+	}
+
+	// Check if the credentials are correct and get the name and role
+	name, role, isValid, err := checkCredentials(req.Email, req.Password)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, LoginResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	if !isValid {
+		c.JSON(http.StatusUnauthorized, LoginResponse{
+			Success: false,
+			Message: "Invalid credentials",
+		})
+		return
+	}
+
+	// On successful login, respond with a success message, name, and role
+	c.JSON(http.StatusOK, LoginResponse{
+		Success: true,
+		Message: "Login successful!",
+		Name:    name, // Send the user's first name
+		Role:    role, // Send the user's role
+	})
+}
+
+// getProductsHandler handles the request to fetch products from the database
+func getProductsHandler(c *gin.Context) {
+	// Query to fetch products
+	rows, err := db.Query("SELECT id, name, description, price, quantity, is_active, image_url, discontinued FROM products WHERE is_active = TRUE")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch products"})
+		log.Println("Error fetching products:", err)
+		return
+	}
+	defer rows.Close()
+
+	var products []Product
+
+	// Iterate through the rows and populate the products slice
+	for rows.Next() {
+		var p Product
+		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Price, &p.Quantity, &p.IsActive, &p.ImageURL, &p.Discontinued); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to read product data"})
+			log.Println("Error reading product data:", err)
+			return
+		}
+
+		// Ensure that the image URL is correctly formatted
+		// If the URL starts with "/assets/", don't append it again
+		if !strings.HasPrefix(p.ImageURL, "/assets/") {
+			p.ImageURL = "/assets/" + p.ImageURL
+		}
+
+		products = append(products, p)
+	}
+
+	// Respond with the products in JSON format
+	c.JSON(http.StatusOK, products)
+}
+
+// updateProductHandler handles the PUT request to update a product in the database
+func updateProductHandler(c *gin.Context) {
+	var req Product
+
+	// Bind JSON body to the product struct
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid product data"})
+		return
+	}
+
+	// Query to update product data excluding the image_url field
+	query := `
+        UPDATE products
+        SET name = ?, description = ?, price = ?, quantity = ?, discontinued = ?
+        WHERE id = ?
+    `
+	_, err := db.Exec(query, req.Name, req.Description, req.Price, req.Quantity, req.Discontinued, req.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update product"})
+		log.Println("Error updating product:", err)
+		return
+	}
+
+	// Respond with the updated product (without image_url)
+	c.JSON(http.StatusOK, req)
+}
+
+func main() {
+	// Create a new Gin router
+	r := gin.Default()
+
+	// Enable CORS
+	r.Use(cors.Default()) // Ensures CORS is handled, allowing cross-origin requests from your React frontend.
+
+	// Serve static files from the "assets" directory
+	r.Static("/assets", "./assets") // This allows the frontend to access images under /assets/
+
+	// Handle login POST request
+	r.POST("/login", loginHandler)
+
+	// Handle the GET request for products
+	r.GET("/products", getProductsHandler)
+
+	// Handle the PUT request for editing a product
+	r.PUT("/products/:id", updateProductHandler)
+
+	// Start the Gin server
+	err := r.Run(":8080") // Run on port 8080
+	if err != nil {
+		log.Fatal("Error starting server:", err)
+	}
+}

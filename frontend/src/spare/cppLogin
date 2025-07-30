@@ -1,0 +1,152 @@
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+// Styled button matching Home sidebar style
+function StyledButton({
+  children,
+  type = "button",
+  onClick,
+  style: userStyle,
+  ...rest
+}) {
+  const [hovered, setHovered] = useState(false);
+  const baseStyle = {
+    padding: "8px 12px",
+    background: "white",
+    border: "1px solid #007bff",
+    borderRadius: "4px",
+    color: "#007bff",
+    cursor: "pointer",
+    fontSize: "1rem",
+    transition: "background 0.2s, color 0.2s",
+    ...userStyle,
+  };
+  const hoverStyle = {
+    background: "#007bff",
+    color: "white",
+  };
+
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={hovered ? { ...baseStyle, ...hoverStyle } : baseStyle}
+      {...rest}
+    >
+      {children}
+    </button>
+  );
+}
+
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    const requestBody = {
+      email,
+      password,
+    };
+
+    try {
+      const response = await fetch("http://localhost:8080/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await response.json();
+      console.log("Response from backend:", data);
+
+      if (response.ok && data.success) {
+        localStorage.setItem("authToken", data.token); // Store the token
+        localStorage.setItem("userName", data.name); // Store the user's name
+
+        navigate("/home"); // On successful login, navigate to /home
+      } else {
+        setError(data.message || "Invalid credentials");
+      }
+    } catch (err) {
+      console.error("Error during login:", err);
+      setError("An error occurred. Please try again later.");
+    }
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex", // Flexbox for vertical centering
+        justifyContent: "center",
+        alignItems: "center", // Center vertically
+        minHeight: "100vh", // Take full height of the screen
+        background: "#f9f9f9",
+        padding: "0 20px", // Padding for smaller screens
+        width: "100vw", // Ensure it spans the whole viewport width
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "400px", // Maximum width of the form container
+          padding: "2rem",
+          background: "white",
+          borderRadius: "8px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          textAlign: "center",
+          boxSizing: "border-box", // Ensure padding doesn't affect width
+          margin: "0 auto", // Centers the form horizontally
+        }}
+      >
+        <h2
+          style={{
+            marginBottom: "1.5rem", // Adjusted margin for better spacing
+            fontSize: "1.5rem", // Increased font size for better visibility
+            color: "#333", // Make sure the text is dark enough to be visible
+            fontWeight: "bold", // Added bold weight for emphasis
+          }}
+        >
+          Sign In
+        </h2>
+        {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
+        <form
+          onSubmit={handleLogin}
+          style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+        >
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{
+              padding: "0.5rem",
+              fontSize: "1rem",
+              marginBottom: "0.5rem", // Ensure there's spacing
+            }}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{
+              padding: "0.5rem",
+              fontSize: "1rem",
+              marginBottom: "0.5rem", // Ensure there's spacing
+            }}
+          />
+          <StyledButton type="submit">Log In</StyledButton>
+        </form>
+      </div>
+    </div>
+  );
+}

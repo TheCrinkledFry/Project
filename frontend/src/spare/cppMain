@@ -1,0 +1,22 @@
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom"; // Import React Router components
+import "./index.css"; // Import global styles (if you have any)
+import Login from "./Login.jsx"; // Import the Login component
+import Home from "./Home.jsx"; // Import the Home component
+import Products from "./Products.jsx"; // Import the Products component (make sure you create this file)
+
+const root = ReactDOM.createRoot(document.getElementById("root")); // Get the root div in index.html
+
+root.render(
+  <React.StrictMode>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} /> {/* Default route for Login */}
+        <Route path="/home" element={<Home />} /> {/* Route for Home page */}
+        <Route path="/products" element={<Products />} />{" "}
+        {/* Route for Products page */}
+      </Routes>
+    </Router>
+  </React.StrictMode>,
+);

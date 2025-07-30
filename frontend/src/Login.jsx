@@ -1,180 +1,153 @@
-// Import the necessary hooks
-import React, { useState } from "react"; // Import useState from React
-import { useNavigate } from "react-router-dom"; // Import useNavigate from react-router-dom
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function LoginPage({ onLogin }) {
-  const [email, setEmail] = useState(""); // Hook for email input state
-  const [password, setPassword] = useState(""); // Hook for password input state
-  const [localError, setLocalError] = useState(""); // Hook for error messages
-  const [loading, setLoading] = useState(false); // Hook for loading state
-  const navigate = useNavigate(); // useNavigate hook to handle page navigation
+// Styled button matching Home sidebar style
+function StyledButton({
+  children,
+  type = "button",
+  onClick,
+  style: userStyle,
+  ...rest
+}) {
+  const [hovered, setHovered] = useState(false);
+  const baseStyle = {
+    padding: "8px 12px",
+    background: "white",
+    border: "1px solid #007bff",
+    borderRadius: "4px",
+    color: "#007bff",
+    cursor: "pointer",
+    fontSize: "1rem",
+    transition: "background 0.2s, color 0.2s",
+    ...userStyle,
+  };
+  const hoverStyle = {
+    background: "#007bff",
+    color: "white",
+  };
 
-  const handleSubmit = async (e) => {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={hovered ? { ...baseStyle, ...hoverStyle } : baseStyle}
+      {...rest}
+    >
+      {children}
+    </button>
+  );
+}
+
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setLocalError("Email and password are required.");
-      return;
-    }
-    setLocalError("");
-    setLoading(true);
+
+    const requestBody = {
+      email,
+      password,
+    };
 
     try {
-      const res = await fetch("http://localhost:8080/api/login", {
+      const response = await fetch("http://localhost:8080/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Login failed");
-      }
+      const data = await response.json();
+      console.log("Response from backend:", data);
 
-      const data = await res.json();
-      // Call onLogin with the user data here
-      onLogin(data); // This will update the user state in App.js
-      navigate("/dashboard");
+      if (response.ok && data.success) {
+        localStorage.setItem("authToken", data.token); // Store the token
+        localStorage.setItem("userName", data.name); // Store the user's name
+        localStorage.setItem("userRole", data.role); // Store the user's role
+
+        navigate("/home"); // On successful login, navigate to /home
+      } else {
+        setError(data.message || "Invalid credentials");
+      }
     } catch (err) {
-      setLocalError(err.message);
-    } finally {
-      setLoading(false);
+      console.error("Error during login:", err);
+      setError("An error occurred. Please try again later.");
     }
   };
 
   return (
     <div
       style={{
-        maxWidth: "400px",
-        margin: "50px auto",
-        fontFamily: "sans-serif",
+        display: "flex", // Flexbox for vertical centering
+        justifyContent: "center",
+        alignItems: "center", // Center vertically
+        minHeight: "100vh", // Take full height of the screen
+        background: "#f9f9f9",
+        padding: "0 20px", // Padding for smaller screens
+        width: "100vw", // Ensure it spans the whole viewport width
       }}
     >
-      <h2>Login</h2>
-      {localError && <p style={{ color: "red" }}>{localError}</p>}
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "10px" }}>
-          <label htmlFor="email">Email</label>
-          <br />
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "400px", // Maximum width of the form container
+          padding: "2rem",
+          background: "white",
+          borderRadius: "8px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          textAlign: "center",
+          boxSizing: "border-box", // Ensure padding doesn't affect width
+          margin: "0 auto", // Centers the form horizontally
+        }}
+      >
+        <h2
+          style={{
+            marginBottom: "1.5rem", // Adjusted margin for better spacing
+            fontSize: "1.5rem", // Increased font size for better visibility
+            color: "#333", // Make sure the text is dark enough to be visible
+            fontWeight: "bold", // Added bold weight for emphasis
+          }}
+        >
+          Sign In
+        </h2>
+        {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
+        <form
+          onSubmit={handleLogin}
+          style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+        >
           <input
-            id="email"
             type="email"
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{ width: "100%", padding: "8px" }}
-            disabled={loading}
+            required
+            style={{
+              padding: "0.5rem",
+              fontSize: "1rem",
+              marginBottom: "0.5rem", // Ensure there's spacing
+            }}
           />
-        </div>
-        <div style={{ marginBottom: "10px" }}>
-          <label htmlFor="password">Password</label>
-          <br />
           <input
-            id="password"
             type="password"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{ width: "100%", padding: "8px" }}
-            disabled={loading}
+            required
+            style={{
+              padding: "0.5rem",
+              fontSize: "1rem",
+              marginBottom: "0.5rem", // Ensure there's spacing
+            }}
           />
-        </div>
-        <button
-          type="submit"
-          style={{ padding: "10px 20px" }}
-          disabled={loading}
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
+          <StyledButton type="submit">Log In</StyledButton>
+        </form>
+      </div>
     </div>
   );
 }
-
-// import React, { useState } from "react";
-//
-// export default function LoginPage({ onLogin, errorMessage }) {
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [localError, setLocalError] = useState("");
-//   const [loading, setLoading] = useState(false);
-//
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     if (!email || !password) {
-//       setLocalError("Email and password are required.");
-//       return;
-//     }
-//     setLocalError("");
-//     setLoading(true);
-//
-//     try {
-//       // Updated the URL to match your Go server's address
-//       const res = await fetch("http://localhost:8080/api/login", {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ email, password }),
-//       });
-//
-//       if (!res.ok) {
-//         const errorData = await res.json();
-//         throw new Error(errorData.message || "Login failed");
-//       }
-//
-//       const data = await res.json();
-//       onLogin(data.user); // Use the response data directly
-//     } catch (err) {
-//       setLocalError(err.message);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-//
-//   return (
-//     <div
-//       style={{
-//         maxWidth: "400px",
-//         margin: "50px auto",
-//         fontFamily: "sans-serif",
-//       }}
-//     >
-//       <h2>Login</h2>
-//
-//       {localError && <p style={{ color: "red" }}>{localError}</p>}
-//       {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
-//
-//       <form onSubmit={handleSubmit}>
-//         <div style={{ marginBottom: "10px" }}>
-//           <label htmlFor="email">Email</label>
-//           <br />
-//           <input
-//             id="email"
-//             type="email"
-//             value={email}
-//             onChange={(e) => setEmail(e.target.value)}
-//             style={{ width: "100%", padding: "8px" }}
-//             disabled={loading}
-//           />
-//         </div>
-//
-//         <div style={{ marginBottom: "10px" }}>
-//           <label htmlFor="password">Password</label>
-//           <br />
-//           <input
-//             id="password"
-//             type="password"
-//             value={password}
-//             onChange={(e) => setPassword(e.target.value)}
-//             style={{ width: "100%", padding: "8px" }}
-//             disabled={loading}
-//           />
-//         </div>
-//
-//         <button
-//           type="submit"
-//           style={{ padding: "10px 20px" }}
-//           disabled={loading}
-//         >
-//           {loading ? "Logging in..." : "Login"}
-//         </button>
-//       </form>
-//     </div>
-//   );
-// }

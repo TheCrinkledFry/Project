@@ -1,0 +1,285 @@
+import React, { useState, useEffect } from "react";
+
+export default function Products() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [imageStatus, setImageStatus] = useState({});
+  const [search, setSearch] = useState("");
+
+  const API = "http://localhost:8080"; // Base URL for API
+
+  // Fetch products when the component is mounted
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch(`${API}/products`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch products");
+        }
+        const data = await response.json();
+        setProducts(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []); // Empty dependency array to run once when the component mounts
+
+  // Fetch image to explicitly check if it's available
+  const checkImage = async (imageUrl) => {
+    try {
+      const response = await fetch(imageUrl, { method: "HEAD" });
+      if (response.ok) {
+        return imageUrl;
+      }
+    } catch (err) {
+      console.error("Failed to fetch image:", err);
+    }
+    return "/assets/placeholder.png"; // Return fallback image if the original image is not found
+  };
+
+  // Handle image fetching for each product
+  const loadImage = (product) => {
+    const fullImageUrl = `${API}${product.image_url}`; // Build full image URL
+    if (!imageStatus[product.id]) {
+      checkImage(fullImageUrl).then((validImage) => {
+        setImageStatus((prevStatus) => ({
+          ...prevStatus,
+          [product.id]: validImage,
+        }));
+      });
+    }
+    return imageStatus[product.id] || "/assets/placeholder.png";
+  };
+
+  // Handle form to add a product
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const payload = {
+      name: form.name.value.trim(),
+      price: parseFloat(form.price.value),
+      quantity: parseInt(form.quantity.value, 10),
+      available: true,
+      imageUrl: form.imageUrl.value.trim(),
+    };
+
+    try {
+      const response = await fetch(`${API}/products`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add product");
+      }
+
+      const newProd = await response.json();
+      setProducts((prev) => [...prev, newProd]);
+      form.reset();
+    } catch (err) {
+      console.error("Failed to add product:", err);
+    }
+  };
+
+  // Filter products based on search input
+  const filtered = products.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  // Render loading state, error message, or the products list
+  if (loading) {
+    return <div>Loading products...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  const gridStyle = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+    gap: "2rem",
+    marginTop: "1rem",
+  };
+
+  const cardStyle = {
+    display: "flex",
+    flexDirection: "column",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    overflow: "hidden",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+  };
+
+  const imgStyle = {
+    width: "100%",
+    height: "350px",
+    objectFit: "cover",
+  };
+
+  const cardContentStyle = { padding: "1rem", flexGrow: 1 };
+
+  // Styled Button component (Inline version)
+  function StyledButton({
+    children,
+    onClick,
+    disabled,
+    type = "button",
+    style: userStyle,
+    ...rest
+  }) {
+    const [hovered, setHovered] = useState(false);
+    const baseStyle = {
+      padding: "8px 12px",
+      background: "white",
+      border: "1px solid #007bff",
+      borderRadius: "4px",
+      color: "#007bff",
+      cursor: disabled ? "not-allowed" : "pointer",
+      opacity: disabled ? 0.6 : 1,
+      fontSize: "1rem",
+      transition: "background 0.2s, color 0.2s",
+      ...userStyle,
+    };
+    const hoverStyle = disabled
+      ? {}
+      : {
+          background: "#007bff",
+          color: "white",
+        };
+    return (
+      <button
+        type={type}
+        onClick={disabled ? undefined : onClick}
+        disabled={disabled}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={hovered ? { ...baseStyle, ...hoverStyle } : baseStyle}
+        {...rest}
+      >
+        {children}
+      </button>
+    );
+  }
+
+  return (
+    <div style={{ padding: "1rem" }}>
+      <h2>Products</h2>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "1rem",
+          alignItems: "center",
+        }}
+      >
+        <form
+          onSubmit={handleAdd}
+          style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
+        >
+          <input
+            name="name"
+            placeholder="Name"
+            required
+            style={{ padding: "0.5rem" }}
+          />
+          <input
+            name="price"
+            type="number"
+            step="0.01"
+            placeholder="Price"
+            required
+            style={{ padding: "0.5rem" }}
+          />
+          <input
+            name="quantity"
+            type="number"
+            placeholder="Qty"
+            required
+            style={{ padding: "0.5rem" }}
+          />
+          <input
+            name="imageUrl"
+            placeholder="Image URL"
+            required
+            style={{ padding: "0.5rem", width: "300px" }}
+          />
+          <StyledButton type="submit">Add</StyledButton>
+        </form>
+        <input
+          type="text"
+          placeholder="Search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ padding: "0.5rem", marginLeft: "auto", flexGrow: 1 }}
+        />
+      </div>
+
+      <div style={gridStyle}>
+        {filtered.map((product) => {
+          const imageUrl = loadImage(product); // Get the image URL for the product
+
+          return (
+            <div key={product.id} style={cardStyle}>
+              {/* Image with explicit fetch */}
+              <img
+                src={imageUrl}
+                alt={product.name}
+                style={imgStyle}
+                onError={(e) => {
+                  e.target.onerror = null; // Prevent loop
+                  e.target.src = "/assets/placeholder.png"; // Fallback image
+                }}
+              />
+              <div style={cardContentStyle}>
+                <h3 style={{ margin: "0 0 0.5rem 0" }}>{product.name}</h3>
+                <p style={{ margin: "0.25rem 0" }}>
+                  ${product.price.toFixed(2)}
+                </p>
+                <p style={{ margin: "0.25rem 0" }}>Stock: {product.quantity}</p>
+                {product.quantity === 0 && (
+                  <span
+                    style={{
+                      color: "red",
+                      fontWeight: "bold",
+                      display: "block",
+                      margin: "0.5rem 0",
+                    }}
+                  >
+                    Out of Stock
+                  </span>
+                )}
+                {product.discontinued && (
+                  <span
+                    style={{
+                      color: "red",
+                      fontWeight: "bold",
+                      display: "block",
+                      margin: "0.5rem 0",
+                    }}
+                  >
+                    Discontinued
+                  </span>
+                )}
+                {product.description && (
+                  <p style={{ margin: "0.25rem 0" }}>{product.description}</p>
+                )}
+              </div>
+              <div style={{ padding: "1rem" }}>
+                <StyledButton>Edit</StyledButton>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
