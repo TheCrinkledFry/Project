@@ -2,36 +2,43 @@
 
 require('dotenv').config();
 const express = require('express');
-const cors    = require('cors');
-const path    = require('path');
+const cors = require('cors');
+const path = require('path');
+const morgan = require('morgan');
 
-const authRoutes     = require('./routes/auth');
-const productRoutes  = require('./routes/products');
-const orderRoutes    = require('./routes/orders');
+// Routes
+const authRoutes = require('./routes/auth');
+const productRoutes = require('./routes/products');
+const orderRoutes = require('./routes/orders');
 const discountRoutes = require('./routes/discounts');
 
 const app = express();
 
-// Enable CORS and JSON parsing
-app.use(cors());
+// Middleware
+app.use(cors({
+  origin: ['http://localhost:3000'], // Add production domain here later
+}));
 app.use(express.json());
+app.use(morgan('dev'));
 
-// Serve product images from data/images
-app.use(
-  '/images',
-  express.static(path.join(__dirname, '../data/images'))
-);
+// Serve static product images
+app.use('/images', express.static(path.join(__dirname, '../data/images')));
 
 // Health check
 app.get('/', (req, res) => res.send('👋 JSON‑DB backend alive!'));
 
-// Mount your API routes
-app.use('/api/auth',      authRoutes);
-app.use('/api/products',  productRoutes);
-app.use('/api/orders',    orderRoutes);
+// API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/api/discounts', discountRoutes);
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal server error' });
+});
 
 // Start the server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
-
+app.listen(PORT, () => console.log(`🚀 Server listening on port ${PORT}`));

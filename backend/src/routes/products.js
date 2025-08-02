@@ -3,8 +3,32 @@ const router  = express.Router();
 const { read, write } = require('../fileDb');
 
 router.get('/', async (req, res) => {
-  const products = await read('products');
-  res.json(products);
+  try {
+    const { search = '', sort = '', dir = 'asc' } = req.query;
+    let products = await read('products');
+
+    // Filter by search
+    if (search) {
+      products = products.filter(p =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        (p.description || '').toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // Sort
+    if (sort === 'price') {
+      products.sort((a, b) => dir === 'desc' ? b.price - a.price : a.price - b.price);
+    } else if (sort === 'availability') {
+      products.sort((a, b) => {
+        if (a.available !== b.available) return dir === 'desc' ? a.available - b.available : b.available - a.available;
+        return dir === 'desc' ? a.quantity - b.quantity : b.quantity - a.quantity;
+      });
+    }
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load products' });
+  }
 });
 
 router.post('/', async (req, res) => {
