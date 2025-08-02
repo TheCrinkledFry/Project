@@ -183,7 +183,7 @@ export default function Home({ children }) {
               <br /><br />
               Use the sidebar to navigate between sections. You can view, add, and edit products, keep track of all customer orders, and manage discount codes. If you are a manager, you’ll have access to even more advanced controls.
               <br /><br />
-              Questions? Contact Hayes, Gabriel, or Noah, your group 8 experts.
+              Questions? Contact Hayes, Gabriel, or Noah, and Christian your group 8 experts.
             </p>
           </div>
         )}
