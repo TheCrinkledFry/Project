@@ -7,11 +7,20 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-contrib/cors" // Add this import for CORS support
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	_ "github.com/go-sql-driver/mysql"
 )
+
+// Employee represents an account in the system
+type Employee struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Password string `json:"-"` // omit password in JSON responses
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+}
 
 // Product represents the structure of a product in the database
 type Product struct {
@@ -35,34 +44,53 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
-	Name    string `json:"name,omitempty"` // Include the name (first name) in the response
-	Role    string `json:"role,omitempty"` // Include the role in the response
+	Name    string `json:"name,omitempty"`
+	Role    string `json:"role,omitempty"`
+}
+
+// OrderItem represents a product item in an order
+type OrderItem struct {
+	ProductID   int     `json:"productId"`
+	ProductName string  `json:"productName"`
+	Quantity    int     `json:"quantity"`
+	Price       float64 `json:"priceAtPurchase"`
+}
+
+// Order represents an order with its items
+type Order struct {
+	ID           int         `json:"id"`
+	CustomerName string      `json:"customerName"`
+	Total        float64     `json:"total"`
+	Status       string      `json:"status"`
+	Date         string      `json:"date"`
+	Items        []OrderItem `json:"items"`
+	DiscountCode string      `json:"discountCode,omitempty"`
+}
+
+// Discount represents a discount code with its percentage
+type Discount struct {
+	Code   string  `json:"code"`
+	Amount float64 `json:"amount"`
 }
 
 // Global variable for MySQL DB connection
 var db *sql.DB
 
-// Initialize the MySQL database connection
 func init() {
 	var err error
-	// Open the MySQL database connection (replace with your credentials)
-	dsn := "root:Jfyetdhfyd@tcp(127.0.0.1:3306)/backend" // Make sure this is correct
+	dsn := "root:Jfyetdhfyd@tcp(127.0.0.1:3306)/backend"
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
 		log.Fatal("Error connecting to the database:", err)
 	}
-
-	// Ensure the database is reachable
 	if err = db.Ping(); err != nil {
 		log.Fatal("Error pinging the database:", err)
 	}
 }
 
-// checkCredentials compares the provided email and password with the database
 func checkCredentials(email, password string) (string, string, bool, error) {
 	var dbPassword, dbName, dbRole string
 
-	// Query the database to get the stored password, name, and role for the given email
 	err := db.QueryRow("SELECT password, name, role FROM accounts WHERE email = ?", email).Scan(&dbPassword, &dbName, &dbRole)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -71,19 +99,15 @@ func checkCredentials(email, password string) (string, string, bool, error) {
 		return "", "", false, err
 	}
 
-	// Direct comparison of plain-text password (no encryption)
 	if dbPassword != password {
 		return "", "", false, fmt.Errorf("incorrect password")
 	}
 
-	return dbName, dbRole, true, nil // Return the name, role, and validity
+	return dbName, dbRole, true, nil
 }
 
-// loginHandler handles the login POST request
 func loginHandler(c *gin.Context) {
 	var req LoginRequest
-
-	// Parse the incoming JSON request
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, LoginResponse{
 			Success: false,
@@ -92,7 +116,6 @@ func loginHandler(c *gin.Context) {
 		return
 	}
 
-	// Check if the credentials are correct and get the name and role
 	name, role, isValid, err := checkCredentials(req.Email, req.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, LoginResponse{
@@ -110,18 +133,36 @@ func loginHandler(c *gin.Context) {
 		return
 	}
 
-	// On successful login, respond with a success message, name, and role
 	c.JSON(http.StatusOK, LoginResponse{
 		Success: true,
 		Message: "Login successful!",
-		Name:    name, // Send the user's first name
-		Role:    role, // Send the user's role
+		Name:    name,
+		Role:    role,
 	})
 }
 
-// getProductsHandler handles the request to fetch products from the database
+func getEmployeesHandler(c *gin.Context) {
+	rows, err := db.Query("SELECT id, name, email, role FROM accounts")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch employees"})
+		return
+	}
+	defer rows.Close()
+
+	var employees []Employee
+	for rows.Next() {
+		var e Employee
+		if err := rows.Scan(&e.ID, &e.Name, &e.Email, &e.Role); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error scanning employees"})
+			return
+		}
+		employees = append(employees, e)
+	}
+
+	c.JSON(http.StatusOK, employees)
+}
+
 func getProductsHandler(c *gin.Context) {
-	// Query to fetch products
 	rows, err := db.Query("SELECT id, name, description, price, quantity, is_active, image_url, discontinued FROM products WHERE is_active = TRUE")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch products"})
@@ -132,7 +173,6 @@ func getProductsHandler(c *gin.Context) {
 
 	var products []Product
 
-	// Iterate through the rows and populate the products slice
 	for rows.Next() {
 		var p Product
 		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Price, &p.Quantity, &p.IsActive, &p.ImageURL, &p.Discontinued); err != nil {
@@ -141,8 +181,6 @@ func getProductsHandler(c *gin.Context) {
 			return
 		}
 
-		// Ensure that the image URL is correctly formatted
-		// If the URL starts with "/assets/", don't append it again
 		if !strings.HasPrefix(p.ImageURL, "/assets/") {
 			p.ImageURL = "/assets/" + p.ImageURL
 		}
@@ -150,21 +188,16 @@ func getProductsHandler(c *gin.Context) {
 		products = append(products, p)
 	}
 
-	// Respond with the products in JSON format
 	c.JSON(http.StatusOK, products)
 }
 
-// updateProductHandler handles the PUT request to update a product in the database
 func updateProductHandler(c *gin.Context) {
 	var req Product
-
-	// Bind JSON body to the product struct
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid product data"})
 		return
 	}
 
-	// Query to update product data excluding the image_url field
 	query := `
         UPDATE products
         SET name = ?, description = ?, price = ?, quantity = ?, discontinued = ?
@@ -177,32 +210,24 @@ func updateProductHandler(c *gin.Context) {
 		return
 	}
 
-	// Respond with the updated product (without image_url)
 	c.JSON(http.StatusOK, req)
 }
 
-// createProductHandler handles the request to create a new product in the database
 func createProductHandler(c *gin.Context) {
 	var req Product
-
-	// Bind JSON body to the product struct
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid product data"})
 		return
 	}
 
-	// Ensure that image_url is properly handled
 	if !strings.HasPrefix(req.ImageURL, "/assets/") {
 		req.ImageURL = "/assets/" + req.ImageURL
 	}
 
-	// Query to insert the new product into the database
 	query := `
         INSERT INTO products (name, description, price, quantity, is_active, discontinued, image_url)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     `
-
-	// Insert the new product data into the database
 	result, err := db.Exec(query, req.Name, req.Description, req.Price, req.Quantity, req.IsActive, req.Discontinued, req.ImageURL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create product"})
@@ -210,7 +235,6 @@ func createProductHandler(c *gin.Context) {
 		return
 	}
 
-	// Get the ID of the newly created product
 	productID, err := result.LastInsertId()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch product ID"})
@@ -218,7 +242,6 @@ func createProductHandler(c *gin.Context) {
 		return
 	}
 
-	// Respond with the newly created product
 	c.JSON(http.StatusOK, gin.H{
 		"id":           productID,
 		"name":         req.Name,
@@ -231,31 +254,98 @@ func createProductHandler(c *gin.Context) {
 	})
 }
 
-func main() {
-	// Create a new Gin router
-	r := gin.Default()
-
-	// Enable CORS
-	r.Use(cors.Default()) // Ensures CORS is handled, allowing cross-origin requests from your React frontend.
-
-	// Serve static files from the "assets" directory
-	r.Static("/assets", "./assets") // This allows the frontend to access images under /assets/
-
-	// Handle login POST request
-	r.POST("/login", loginHandler)
-
-	// Handle the GET request for products
-	r.GET("/products", getProductsHandler)
-
-	// Handle the PUT request for editing a product
-	r.PUT("/products/:id", updateProductHandler)
-
-	// Handle the POST request for creating a new product
-	r.POST("/products", createProductHandler)
-
-	// Start the Gin server
-	err := r.Run(":8080") // Run on port 8080
+func getOrdersHandler(c *gin.Context) {
+	rows, err := db.Query("SELECT id, customer_name, total_price, status, created_at FROM orders")
 	if err != nil {
-		log.Fatal("Error starting server:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch orders"})
+		return
+	}
+	defer rows.Close()
+
+	var orders []Order
+
+	for rows.Next() {
+		var o Order
+		var createdAt string
+		if err := rows.Scan(&o.ID, &o.CustomerName, &o.Total, &o.Status, &createdAt); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error scanning orders"})
+			return
+		}
+		o.Date = createdAt
+
+		itemRows, err := db.Query(`
+            SELECT oi.product_id, p.name, oi.quantity, oi.price_at_purchase
+            FROM order_items oi
+            JOIN products p ON oi.product_id = p.id
+            WHERE oi.order_id = ?`, o.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch order items"})
+			return
+		}
+
+		var items []OrderItem
+		for itemRows.Next() {
+			var item OrderItem
+			if err := itemRows.Scan(&item.ProductID, &item.ProductName, &item.Quantity, &item.Price); err != nil {
+				itemRows.Close()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error scanning order items"})
+				return
+			}
+			items = append(items, item)
+		}
+		itemRows.Close()
+
+		orders = append(orders, o)
+	}
+
+	c.JSON(http.StatusOK, orders)
+}
+
+func getDiscountsHandler(c *gin.Context) {
+	rows, err := db.Query("SELECT code, discount_percent FROM discounts WHERE CURDATE() BETWEEN start_date AND end_date")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch discounts"})
+		return
+	}
+	defer rows.Close()
+
+	var discounts []Discount
+	for rows.Next() {
+		var d Discount
+		if err := rows.Scan(&d.Code, &d.Amount); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error scanning discounts"})
+			return
+		}
+		discounts = append(discounts, d)
+	}
+
+	c.JSON(http.StatusOK, discounts)
+}
+
+func main() {
+	defer db.Close()
+
+	r := gin.Default()
+	r.Use(cors.Default())
+
+	// Serve static files from ./assets at /assets URL path
+	r.Static("/assets", "./assets")
+
+	// Routes for employees
+	r.POST("/login", loginHandler)
+	r.GET("/employees", getEmployeesHandler)
+
+	// Routes for products
+	r.GET("/products", getProductsHandler)
+	r.PUT("/products/update", updateProductHandler)
+	r.POST("/products/create", createProductHandler)
+
+	// Routes for orders and discounts
+	r.GET("/orders", getOrdersHandler)
+	r.GET("/discounts", getDiscountsHandler)
+
+	err := r.Run(":8080")
+	if err != nil {
+		log.Fatal("Failed to start server:", err)
 	}
 }
