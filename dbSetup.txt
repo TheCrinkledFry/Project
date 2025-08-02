@@ -1,0 +1,96 @@
+-- Create the backend database if it doesn't exist
+CREATE DATABASE IF NOT EXISTS backend;
+
+USE backend;
+
+-- Create the products table with image_url directly in it
+CREATE TABLE IF NOT EXISTS products (
+    id INT AUTO_INCREMENT PRIMARY KEY,            -- Auto-incrementing ID
+    name VARCHAR(255) NOT NULL,                   -- Product name
+    description TEXT,                             -- Product description
+    price DECIMAL(10, 2) NOT NULL,                -- Product price
+    quantity INT NOT NULL,                        -- Product quantity
+    is_active BOOLEAN DEFAULT TRUE,               -- "is_active" status
+    discontinued BOOLEAN DEFAULT FALSE,           -- "discontinued" status
+    image_url TEXT NOT NULL                       -- Direct image URL field
+);
+
+-- Insert sample product data (with the correct image_url format)
+INSERT INTO products (name, description, price, quantity, is_active, discontinued, image_url) VALUES
+('Organic Bananas', 'Fresh organic bananas', 1.20, 100, TRUE, FALSE, '/assets/holdingEachOther.png'),
+('Almond Milk', 'Unsweetened almond milk', 3.50, 60, TRUE, FALSE, '/assets/pinkGirl.jpeg'),
+('Purple Hair Dye', 'Long-lasting purple hair dye', 15.00, 45, TRUE, FALSE, '/assets/purpHair.jpeg'),
+('React T-Shirt', 'Stylish React.js t-shirt', 20.00, 25, TRUE, FALSE, '/assets/react.svg'),
+('Red Chair', 'Comfortable red chair for your office', 75.00, 15, TRUE, FALSE, '/assets/redCh.png'),
+('Rem T-Shirt', 'Stylish t-shirt with Rem print', 22.50, 40, TRUE, FALSE, '/assets/rem.jpeg');
+
+
+-- Accounts Table
+CREATE TABLE IF NOT EXISTS accounts (
+    id INT AUTO_INCREMENT PRIMARY KEY,        -- Auto-incrementing ID
+    name VARCHAR(50),                         -- Account name
+    password VARCHAR(100) NOT NULL,           -- Encrypted password
+    email VARCHAR(100) NOT NULL,              -- Email address
+    role VARCHAR(10)                          -- User role (e.g. 'manager', 'employee')
+);
+
+-- Insert sample accounts data
+INSERT INTO accounts (name, password, email, role) VALUES
+('Alice', 'pass1234', 'alicejones@gmail.com', 'manager'),
+('Bob', 'password1', 'bob.smith@hotmail.com', 'manager'),
+('Charlie', 'charlie2025', 'charlie.brown@yahoo.com', 'manager'),
+('David', 'davidpwd', 'david.johnson@icloud.com', 'manager'),
+('Eva', 'evaSecure', 'eva.williams@gmail.com', 'manager'),
+('Frank', 'frank123', 'frank.miller@outlook.com', 'manager'),
+('Grace', 'gracepwd', 'grace.davis@gmail.com', 'manager'),
+('Hannah', 'hannah2023', 'hannah.garcia@hotmail.com', 'employee'),
+('Ian', 'ianpass', 'ian.martinez@yahoo.com', 'employee');
+
+-- Discounts Table
+CREATE TABLE IF NOT EXISTS discounts (
+    id INT AUTO_INCREMENT PRIMARY KEY,    -- Auto-incrementing ID
+    product_id INT NOT NULL,               -- Foreign key to products
+    code VARCHAR(50) NOT NULL,             -- Discount code
+    discount_percent DECIMAL(5, 2),        -- Discount percentage
+    start_date DATE,                       -- Start date for the discount
+    end_date DATE,                         -- End date for the discount
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE -- Delete discount when product is deleted
+);
+
+-- Insert sample discount data
+INSERT INTO discounts (product_id, code, discount_percent, start_date, end_date) VALUES
+(3, 'BREAD15', 15.00, '2025-07-01', '2025-07-31'),
+(4, 'RICE10', 10.00, '2025-07-05', '2025-08-05'),
+(1, 'BUTTER20', 20.00, '2025-07-10', '2025-07-25');
+
+-- Orders Table
+CREATE TABLE IF NOT EXISTS orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,         -- Auto-incrementing ID
+    customer_name VARCHAR(100),                -- Customer name
+    total_price DECIMAL(10, 2),                -- Total price of the order
+    status VARCHAR(20) DEFAULT 'placed',       -- Order status (placed, executed, etc.)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Order creation timestamp
+    executed_at TIMESTAMP NULL                 -- Execution timestamp (nullable)
+);
+
+-- Insert sample orders data
+INSERT INTO orders (customer_name, total_price, status, created_at, executed_at) VALUES
+('Alice Cooper', 36.00, 'placed', '2025-07-24 09:30:00', NULL),
+('Bob Marley', 82.50, 'executed', '2025-07-23 14:10:00', '2025-07-24 12:00:00');
+
+-- Order Items Table
+CREATE TABLE IF NOT EXISTS order_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,         -- Auto-incrementing ID
+    order_id INT NOT NULL,                     -- Foreign key to orders
+    product_id INT NOT NULL,                   -- Foreign key to products
+    quantity INT NOT NULL,                     -- Quantity ordered
+    price_at_purchase DECIMAL(10, 2) NOT NULL, -- Price at time of purchase
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE, -- Delete items when order is deleted
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE -- Delete items when product is deleted
+);
+
+-- Insert sample order_items data
+INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALUES
+(1, 1, 10, 1.20),  -- Organic Bananas x10 (10 * 1.20 = 12.00)
+(1, 4, 8, 3.00);   -- Free-range Eggs x8 (8 * 3.00 = 24.00)
+
